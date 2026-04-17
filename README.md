@@ -1,1 +1,8 @@
 # PipeViz-simulator
+-------------------
+This project is done for Course `SP26-CSE-60321-01 Advanced Computer Architecture` and its a group project and contributors are
+* Laxminarayana Vadnala <lvadnala@nd.edu>
+* Patrick Do <mdo23@nd.edu>
+* Jude Lynch <jlynch23@nd.edu>
+
+PipeViz: A Cycle-Accurate Pipeline Simulator and Visualizer for ARM/x86 Assembly is a system designed to help users understand instruction-level execution by visualizing the cycle-by-cycle behavior of a CPU pipeline for a given program. The workflow begins with a program written in supported languages such as C/C++, Rust, or Python, which is compiled inside Docker containers to generate corresponding ARM or x86 assembly code. This assembly is then processed by a FastAPI-based backend that parses instructions and constructs a structured JSON representation of pipeline stages across cycles. The backend also incorporates an AI-assisted module to detect structural and data hazards, enabling smarter identification of stalls and dependencies. The generated JSON is consumed by a ReactJS frontend, which provides an interactive visualization of the pipeline, highlighting hazards, stalls, and execution flow. Key features include hazard visualization, stall detection, toggling between forwarding and non-forwarding modes, branch prediction strategies (static and dynamic), and a potential extension to superscalar pipeline simulation. To ensure correctness and robustness, each stage of the system—assembly generation, backend processing, and frontend rendering—is validated with dedicated test cases, with Docker-based execution used to verify that input programs are correctly compiled and runnable before simulation.
