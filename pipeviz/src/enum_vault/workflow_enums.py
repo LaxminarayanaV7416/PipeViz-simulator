@@ -16,14 +16,27 @@ class SupportedFileExtensionsEnum(StrEnum):
 
 
 class DockerFileNamesEnum(StrEnum):
-    RUST = "Dockerfile.rust"
-    PYTHON = "Dockerfile.python"
-    C_CPP = "Dockerfile.c_cpp"
+    RUST = "rust.dockerfile"
+    PYTHON = "python.dockerfile"
+    C_CPP = "c_cpp.dockerfile"
 
 
 class RunnableCommands:
-    def docker_build(self, image_tag: str) -> list[str]:
-        return ["docker", "build", "--no-cache", "-t", image_tag]
+    def docker_build(
+        self, image_tag: str, file_name: Path, program_file_name: str
+    ) -> list[str]:
+        return [
+            "docker",
+            "build",
+            "--no-cache",
+            "-f",
+            str(file_name),
+            "-t",
+            image_tag,
+            "--build-arg",
+            f"PROGRAM_FILE_NAME={program_file_name}",
+            str(file_name.parent),
+        ]
 
     def docker_create(self, image_tag: str) -> list[str]:
         return ["docker", "create", image_tag]
@@ -32,7 +45,7 @@ class RunnableCommands:
         self,
         container_id: str,
         programming_language: SupportedProgrammingLanguagesEnum,
-        destination_path: Path,
+        destination_path: Path | str,
     ) -> list[str]:
         if programming_language == SupportedProgrammingLanguagesEnum.RUST:
             result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
@@ -45,6 +58,9 @@ class RunnableCommands:
     def docker_remove(self, container_id: str) -> list[str]:
         return ["docker", "rm", container_id, ">/dev/null"]
 
+    def docker_image_delete(self, image_tag: str) -> list[str]:
+        return ["docker", "image", "rm", "-f", image_tag]
+
 
 class WorkflowPaths:
     def __init__(self, base_path: Path):
@@ -53,6 +69,10 @@ class WorkflowPaths:
     @property
     def assembly_assets(self) -> Path:
         return self._base_path / "assembly_assets"
+
+    @property
+    def mock_path(self) -> Path:
+        return self._base_path / "mock"
 
     @property
     def runs(self) -> Path:
@@ -69,3 +89,19 @@ class WorkflowPaths:
     @property
     def c_cpp_docker_file(self) -> Path:
         return self.assembly_assets / "c_cpp.dockerfile"
+
+    @property
+    def rust_mock_path(self) -> Path:
+        return self.mock_path / "test-fib.rs"
+
+    @property
+    def python_mock_path(self) -> Path:
+        return self.mock_path / "test-fib.py"
+
+    @property
+    def cpp_mock_path(self) -> Path:
+        return self.mock_path / "test-fib.cpp"
+
+    @property
+    def c_mock_path(self) -> Path:
+        return self.mock_path / "test-fib.c"
