@@ -17,4 +17,4 @@ COPY "${PROGRAM_FILE_NAME}" main.rs
 RUN rustc -C debuginfo=2 -o main main.rs
 
 # disassemble the compiled binary
-RUN objdump -d main > main.asm
+RUN objdump -d -S -r -t main > main.asm

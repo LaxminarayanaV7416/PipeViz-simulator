@@ -119,11 +119,11 @@ class PipeVizWorkflow:
         if not executed:
             return False, response
 
-        # step 6: remove the docker container
-        docker_remove_command = self._commands.docker_remove(container_id)
-        executed, _ = self.run_shell_command(docker_remove_command)
-        if not executed:
-            return False, response
+        # # step 6: remove the docker container
+        # docker_remove_command = self._commands.docker_remove(container_id)
+        # executed, _ = self.run_shell_command(docker_remove_command)
+        # if not executed:
+        #     return False, response
 
         # step 7: clean docker image from cache
         docker_image_delete_command = self._commands.docker_image_delete(str(self._id))
