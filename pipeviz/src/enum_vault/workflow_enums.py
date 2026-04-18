@@ -15,6 +15,37 @@ class SupportedFileExtensionsEnum(StrEnum):
     C = "c"
 
 
+class DockerFileNamesEnum(StrEnum):
+    RUST = "Dockerfile.rust"
+    PYTHON = "Dockerfile.python"
+    C_CPP = "Dockerfile.c_cpp"
+
+
+class RunnableCommands:
+    def docker_build(self, image_tag: str) -> list[str]:
+        return ["docker", "build", "--no-cache", "-t", image_tag]
+
+    def docker_create(self, image_tag: str) -> list[str]:
+        return ["docker", "create", image_tag]
+
+    def docker_copy(
+        self,
+        container_id: str,
+        programming_language: SupportedProgrammingLanguagesEnum,
+        destination_path: Path,
+    ) -> list[str]:
+        if programming_language == SupportedProgrammingLanguagesEnum.RUST:
+            result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
+        elif programming_language == SupportedProgrammingLanguagesEnum.C_CPP:
+            result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
+        elif programming_language == SupportedProgrammingLanguagesEnum.PYTHON:
+            result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
+        return result
+
+    def docker_remove(self, container_id: str) -> list[str]:
+        return ["docker", "rm", container_id, ">/dev/null"]
+
+
 class WorkflowPaths:
     def __init__(self, base_path: Path):
         self._base_path = base_path
