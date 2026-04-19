@@ -5,6 +5,15 @@ from typing import List, Set, Tuple
 
 REG_RE = re.compile(r"\b([wx]\d+|xzr|wzr)\b")
 
+"""
+uv run src/trail_cycles.py \
+  --asm runs/b4d0ba8a-6196-4de6-bb60-bd6245b8a2d1/main.asm \
+  --func _ZN4main9fibonacci17h9fb93bd4297402cbE \
+  --branch-penalty 1 \
+  --max-instr 25
+
+"""
+
 
 @dataclass
 class Instr:
