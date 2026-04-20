@@ -4,12 +4,11 @@ from pathlib import Path
 
 class SupportedProgrammingLanguagesEnum(StrEnum):
     RUST = "rust"
-    C_CPP = "c_cpp"
-    PYTHON = "python"
+    C = "c"
+    CPP = "cpp"
 
 
 class SupportedFileExtensionsEnum(StrEnum):
-    PYTHON = "py"
     RUST = "rs"
     CPP = "cpp"
     C = "c"
@@ -17,8 +16,8 @@ class SupportedFileExtensionsEnum(StrEnum):
 
 class DockerFileNamesEnum(StrEnum):
     RUST = "rust.dockerfile"
-    PYTHON = "python.dockerfile"
-    C_CPP = "c_cpp.dockerfile"
+    C = "c.dockerfile"
+    CPP = "cpp.dockerfile"
 
 
 class RunnableCommands:
@@ -47,11 +46,12 @@ class RunnableCommands:
         programming_language: SupportedProgrammingLanguagesEnum,
         destination_path: Path | str,
     ) -> list[str]:
+        result = None
         if programming_language == SupportedProgrammingLanguagesEnum.RUST:
             result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
-        elif programming_language == SupportedProgrammingLanguagesEnum.C_CPP:
+        elif programming_language == SupportedProgrammingLanguagesEnum.C:
             result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
-        elif programming_language == SupportedProgrammingLanguagesEnum.PYTHON:
+        elif programming_language == SupportedProgrammingLanguagesEnum.CPP:
             result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
         return result
 
@@ -83,20 +83,16 @@ class WorkflowPaths:
         return self.assembly_assets / "rust.dockerfile"
 
     @property
-    def python_docker_file(self) -> Path:
-        return self.assembly_assets / "python.dockerfile"
+    def c_docker_file(self) -> Path:
+        return self.assembly_assets / "c.dockerfile"
 
     @property
-    def c_cpp_docker_file(self) -> Path:
-        return self.assembly_assets / "c_cpp.dockerfile"
+    def cpp_docker_file(self) -> Path:
+        return self.assembly_assets / "cpp.dockerfile"
 
     @property
     def rust_mock_path(self) -> Path:
         return self.mock_path / "test-fib.rs"
-
-    @property
-    def python_mock_path(self) -> Path:
-        return self.mock_path / "test-fib.py"
 
     @property
     def cpp_mock_path(self) -> Path:

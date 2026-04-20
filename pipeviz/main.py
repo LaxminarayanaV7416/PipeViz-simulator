@@ -76,12 +76,12 @@ class PipeVizWorkflow:
         if self._programming_language == SupportedProgrammingLanguagesEnum.RUST:
             src_path = self._paths.rust_docker_file
             docker_file_name = DockerFileNamesEnum.RUST
-        elif self._programming_language == SupportedProgrammingLanguagesEnum.PYTHON:
-            src_path = self._paths.python_docker_file
-            docker_file_name = DockerFileNamesEnum.PYTHON
+        elif self._programming_language == SupportedProgrammingLanguagesEnum.C:
+            src_path = self._paths.c_docker_file
+            docker_file_name = DockerFileNamesEnum.C
         else:
-            src_path = self._paths.c_cpp_docker_file
-            docker_file_name = DockerFileNamesEnum.C_CPP
+            src_path = self._paths.cpp_docker_file
+            docker_file_name = DockerFileNamesEnum.CPP
 
         # step 1: create the run directory
         # and move the required files to the run directory
@@ -135,6 +135,6 @@ class PipeVizWorkflow:
 
 
 if __name__ == "__main__":
-    workflow = PipeVizWorkflow(SupportedProgrammingLanguagesEnum.RUST)
-    result = workflow.generate_asembly_code(workflow._paths.rust_mock_path)
+    workflow = PipeVizWorkflow(SupportedProgrammingLanguagesEnum.CPP)
+    result = workflow.generate_asembly_code(workflow._paths.cpp_mock_path)
     print(result)
