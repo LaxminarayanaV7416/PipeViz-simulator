@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import ZipUpload from './components/ZipUpload'
+import FileUpload from './components/FileUpload'
 
 import PipelineGrid from './components/PipelineGrid'
 import './App.css'
@@ -18,13 +18,13 @@ const MOCK_DATA = {
 }
 
 function App() {
-  const [zipFile, setZipFile] = useState(null)
+  const [sourceFile, setSourceFile] = useState(null)
 
   return (
     <div style={{ padding: '32px' }}>
       <h1>PipeViz</h1>
-      <ZipUpload onFileSelect={(file) => setZipFile(file)} />
-      {zipFile && <p>Ready to simulate: {zipFile.name}</p>}
+      <FileUpload onFileSelect={(file) => setSourceFile(file)} />
+      {sourceFile && <p>Ready to simulate: {sourceFile.name}</p>}
 
       <PipelineGrid data={MOCK_DATA} />
     </div>
