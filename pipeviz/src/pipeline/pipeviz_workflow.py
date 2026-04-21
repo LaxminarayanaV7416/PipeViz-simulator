@@ -3,6 +3,8 @@ import subprocess
 from pathlib import Path
 from uuid import uuid4
 
+from loguru import logger
+
 from src.config import BASE_PATH
 from src.enum_vault.workflow_enums import (
     DockerFileNamesEnum,
@@ -43,7 +45,7 @@ class PipeVizWorkflow:
             shutil.copy(source, destination)
             return True
         except Exception as e:
-            print(e)
+            logger.error(e)
             return False
 
     def run_shell_command(self, command: list | str) -> tuple[bool, str]:
@@ -56,7 +58,7 @@ class PipeVizWorkflow:
             else:
                 return False, response.stderr
         except subprocess.CalledProcessError as error:
-            print(error)
+            logger.error(error)
             return False, str(error)
 
     def validate_shell_execution(
@@ -108,7 +110,7 @@ class PipeVizWorkflow:
             return False, response
 
         container_id = response.strip()  # figure out its true or not
-        print("We generated the container id as it is: ", container_id)
+        logger.info("We generated the container id as it is: ", container_id)
 
         # step 5: copy generated assembly from the built docker file
         docker_copy_command = self._commands.docker_copy(
@@ -136,4 +138,4 @@ class PipeVizWorkflow:
 if __name__ == "__main__":
     workflow = PipeVizWorkflow(SupportedProgrammingLanguagesEnum.CPP)
     result = workflow.generate_asembly_code(workflow._paths.cpp_mock_path)
-    print(result)
+    logger.info(result)
