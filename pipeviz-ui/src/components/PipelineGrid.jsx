@@ -1,6 +1,6 @@
 const STAGE_COLORS = {
     IF:  '#083D77', // Regal Navy
-    IS:  '#EBEBD3', // Beige
+    IS:  '#995D81', // Dusty Lavendar
     EXE: '#DA4167', // Magneta Bloom
     MEM: '#F4D35E', // Royal Gold
     WB:  '#F78764' // Coral Glow
@@ -22,8 +22,8 @@ export default function PipelineGrid({ data }) {
     const cycles = Array.from({ length: totalCycles }, (_, i ) => i + 1)
 
     return (
-        <div style={{ overflowX: 'auto', width: '100%' }}>
-            <table style={{ borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>
+        <div style={{ overflowX: 'auto', width: '100%', maxHeight: '80vh' }}>
+            <table style={{ borderCollapse: 'seperate', borderSpacing: 0, whiteSpace: 'nowrap' }}>
                 <thead>
                     <tr>
                         <th style={headerCell}>Instruction</th>
@@ -56,19 +56,24 @@ export default function PipelineGrid({ data }) {
 const headerCell = {
     padding: '6px 12px',
     border: '1px solid #333',
-
     textAlign: 'center',
     fontSize: '13px',
+    position: 'sticky',
+    top: 0,
+    zIndex: 2,
+    backgroundColor: '#242424',
 }
 
 const labelCell = {
     padding: '6px 12px',
     border: '1px solid #333',
-    
     fontFamily: 'monospace',
     fontSize: '12px',
-
     minWidth: '260px',
+    position: 'sticky',
+    left: 0,
+    zIndex: 1,
+    backgroundColor: '#242424',
 }
 
 function stageCell(stage) {
