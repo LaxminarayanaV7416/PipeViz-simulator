@@ -1,8 +1,34 @@
 import { useState } from 'react'
 import FileUpload from './components/FileUpload'
-
+import CodeEditor from './components/CodeEditor'
 import PipelineGrid from './components/PipelineGrid'
 import './App.css'
+
+
+const FIBONACCI_C = `#include <stdio.h>
+  /* Compute the n-th Fibonacci number recursively. */
+  unsigned long fibonacci(unsigned int n) {
+      if (n == 0) {
+          return 0;
+      } else if (n == 1) {
+          return 1;
+      }
+      return fibonacci(n - 1) + fibonacci(n - 2);
+  }
+
+  /* main function where program execution starts */
+  int main() {
+      unsigned int count = 10;
+
+      printf("Fibonacci sequence (first %u terms):\\n", count);
+
+      for (unsigned int i = 0; i < count; i++) {
+          unsigned long value = fibonacci(i);
+          printf("F(%u) = %lu\\n", i, value);
+      }
+
+      return 0;
+  }`
 
 const MOCK_DATA = {
     totalCycles: 48,
@@ -36,15 +62,44 @@ const MOCK_DATA = {
   }
 
 function App() {
-  const [sourceFile, setSourceFile] = useState(null)
+  //const [sourceFile, setSourceFile] = useState(null)
+  //const [mode, setMode] = useState('upload')
+
+  function handleCodeSubmit({ code, language }) {
+    console.log('User submitted code:', { language, code })
+    //later: send to backend API
+  }
 
   return (
-    <div style={{ padding: '32px' }}>
-      <h1>PipeViz</h1>
-      <FileUpload onFileSelect={(file) => setSourceFile(file)} />
-      {sourceFile && <p>Ready to simulate: {sourceFile.name}</p>}
-
-      <PipelineGrid data={MOCK_DATA} />
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      {/* Left panel - code editor */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '24px',
+        borderRight: '1px solid #333',
+        overflow: 'hidden',
+      }}>
+        <h2 style={{ marginTop: 0 }}>Code</h2>
+        <CodeEditor
+          defaultCode={FIBONACCI_C}
+          defaultLanguage="c"
+          onCodeSubmuit={handleCodeSubmit}
+        />
+      </div>
+      
+      {/* Right panel - pipeline grid */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '24px',
+        overflow: 'auto',
+      }}>
+        <h2 stle={{ marginTop: 0 }}>Pipeline</h2>
+        <PipelineGrid data={MOCK_DATA} />
+      </div>
     </div>
   )
 }

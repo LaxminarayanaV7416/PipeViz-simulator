@@ -12,9 +12,9 @@ const PLACEHOLDERS = {
     rust: 'fn main() {\n\n}',
 }
 
-export default function CodeEditor({ onCodeSubmuit }) {
-    const [language, setLanguage] = useState('c')
-    const [code, setCode] = useState('')
+export default function CodeEditor({ onCodeSubmuit, defaultCode = '', defaultLanguage = 'c' }) {
+    const [language, setLanguage] = useState(defaultLanguage)
+    const [code, setCode] = useState(defaultCode)
 
     function handleSubmit() {
         if (!code.trim()) {
@@ -26,7 +26,7 @@ export default function CodeEditor({ onCodeSubmuit }) {
 
 
 return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
         <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
@@ -40,19 +40,19 @@ return (
         <textarea
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            placeholder={PLACEHOLDERS[language]}
             spellCheck={false}
             style={{
+                flex: 1,
                 fontFamily: 'monospace',
                 fontSize: '13px',
-                width: '600px',
-                height: '300px',
+                width: '100%',
                 padding: '12px',
                 backgroundColor: '#1a1a1a',
                 color: '#fff',
                 border: '1px solid #333',
                 borderRadius: '6px',
-                resize: 'vertical'
+                resize: 'none',
+                boxSizing: 'border-box',
             }}
         />
 
