@@ -1,4 +1,7 @@
 import { useState, useRef } from 'react'
+import CodeMirror from '@uiw/react-codemirror'
+import { cpp } from '@codemirror/lang-cpp'
+import { rust } from '@codemirror/lang-rust'
 
 const LANGUAGES = [
     { label: 'C', value: 'c'},
@@ -6,11 +9,17 @@ const LANGUAGES = [
     { label: 'Rust', value: 'rust'},
 ]
 
+const LANGUAGE_EXTENSIONS = {
+    c:    cpp(),
+    cpp:  cpp(),
+    rust: rust(),
+}
+/*
 const PLACEHOLDERS = {
     c: '#include <stdio.h>\n\nint main(){\n return 0;\n}',
     cpp: '#include <iostream>\n\nint main(){\n return 0;\n}',
     rust: 'fn main() {\n\n}',
-}
+}*/
 export default function CodeEditor({ onCodeSubmuit, defaultCode = '', defaultLanguage = 'c' }) {
     const [language, setLanguage] = useState(defaultLanguage)
     const [code, setCode] = useState(defaultCode)
@@ -26,7 +35,6 @@ export default function CodeEditor({ onCodeSubmuit, defaultCode = '', defaultLan
         
         const reader = new FileReader()
         reader.onload = (e) => setCode(e.target.result)
-        
         reader.readAsText(file)
     }
 
@@ -65,24 +73,16 @@ export default function CodeEditor({ onCodeSubmuit, defaultCode = '', defaultLan
                 Upload File
             </button>
 
-            <textarea
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                spellCheck={false}
-                style={{
-                    flex: 1,
-                    fontFamily: 'monospace',
-                    fontSize: '13px',
-                    width: '100%',
-                    padding: '12px',
-                    backgroundColor: '#1a1a1a',
-                    color: '#fff',
-                    border: '1px solid #333',
-                    borderRadius: '6px',
-                    resize: 'none',
-                    boxSizing: 'border-box',
-                }}
-            />
+            <div style={{ flex: 1, overflow: 'auto', fontSize: '15px' }}>
+                <CodeMirror
+                    value={code}
+                    onChange={(value) => setCode(value)}
+                    extensions={[LANGUAGE_EXTENSIONS[language]]}
+                    theme="dark"
+                    height="100%"
+                    style={{ height: '100%' }}
+                />
+            </div>
 
             <button onClick={handleSubmit} style={{ width: 'fit-content' }}>
                 Run Simulation
