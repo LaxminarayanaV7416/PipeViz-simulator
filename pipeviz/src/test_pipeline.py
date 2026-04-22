@@ -46,8 +46,13 @@ class Instruction:
     is_load: bool  # Is this a load instruction?
     is_store: bool  # Is this a store instruction?
 
+    # Branch info
+    branch_target_addr: Optional[str] = None
+    branch_target_pc: Optional[int] = None
+
     def __repr__(self):
         return f"{self.address}: {self.opcode} {self.operands}"
+
 
 
 @dataclass
@@ -130,7 +135,10 @@ class ARM64Parser:
     def parse_instruction(line: str, pc: int) -> Optional[Instruction]:
         """Parse a single ARM64 instruction line"""
         # Match pattern: address: opcode operands
-        match = re.match(r"\s*([0-9a-fA-F]+):\s+([a-zA-Z][a-zA-Z0-9.]*)\s+(.*)", line)
+        match = re.match(
+            r"\s*([0-9a-fA-F]+):\s+(?:[0-9a-fA-F]{2,}\s+)*([a-zA-Z][a-zA-Z0-9.]*)\s*(.*)",
+            line,
+        )
         if not match:
             return None
 
@@ -550,9 +558,10 @@ def main():
     ) as f:
         asm_content = f.read()
 
-    # Extract just the fibonacci function (lines 213-251)
+    # Extract just the fibonacci function (only real instruction lines)
     fib_lines = []
     in_fib = False
+
     for line in asm_content.split("\n"):
         if "0000000000400644 <fibonacci>:" in line:
             in_fib = True
@@ -560,15 +569,13 @@ def main():
         if in_fib:
             if "<main>:" in line or line.startswith("Disassembly"):
                 break
-            # Skip comment lines and function signature
-            if (
-                line.strip()
-                and not line.strip().startswith("*")
-                and not line.strip().startswith("#")
-            ):
+
+            # keep only lines that look like an instruction
+            if ARM64Parser.parse_instruction(line, 0):
                 fib_lines.append(line)
 
-    fibonacci_asm = "\n".join(fib_lines[:20])  # Take first 20 instructions
+    # Keep the first N *instructions* (not raw lines)
+    fibonacci_asm = "\n".join(fib_lines[:20])
 
     print("Analyzing Fibonacci function...")
     print()
