@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Group, Panel, Separator } from 'react-resizable-panels'
 import FileUpload from './components/FileUpload'
 import CodeEditor from './components/CodeEditor'
 import PipelineGrid from './components/PipelineGrid'
@@ -71,36 +72,31 @@ function App() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <Group direction="horizontal" style={{ height: '100vh' }}>
+
       {/* Left panel - code editor */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '24px',
-        borderRight: '1px solid #333',
-        overflow: 'hidden',
-      }}>
+      <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', padding: '24px', overflow: 'hidden'}}>
         <h2 style={{ marginTop: 0 }}>Code</h2>
         <CodeEditor
           defaultCode={FIBONACCI_C}
           defaultLanguage="c"
           onCodeSubmuit={handleCodeSubmit}
-        />
-      </div>
-      
+          />
+      </Panel>
+
+      {/* Drag Handle */}
+      <Separator style={{
+        width: '6px',
+        backgroundColor: '#333',
+        cursor: 'col-resize',
+      }} />
+
       {/* Right panel - pipeline grid */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        padding: '24px',
-        overflow: 'auto',
-      }}>
-        <h2 stle={{ marginTop: 0 }}>Pipeline</h2>
+      <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', padding: '24px', overflow: 'auto'}}>
+        <h2 style={{ martinTop: 0 }}>Pipeline</h2>
         <PipelineGrid data={MOCK_DATA} />
-      </div>
-    </div>
+      </Panel>
+    </Group>
   )
 }
 
