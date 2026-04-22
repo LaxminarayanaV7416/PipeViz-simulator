@@ -72,31 +72,53 @@ function App() {
   }
 
   return (
-    <Group direction="horizontal" style={{ height: '100vh' }}>
+    <div style = {{ display: 'flex', flexDirection: 'column', height: '100vh'}}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 24px',
+        borderBottom: '1px solid #333',
+        flexShrine: 0,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px'}}>
+          <img src="/ND_Monogram_10127_RGB.png" alt="Logo" style={{ height: '40px' }} />
+          <h1 style={{ margin: 0, fontSize: '22px' }}>PipeViz</h1>
+        </div>
 
-      {/* Left panel - code editor */}
-      <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', padding: '24px', overflow: 'hidden'}}>
-        <h2 style={{ marginTop: 0 }}>Code</h2>
-        <CodeEditor
-          defaultCode={FIBONACCI_C}
-          defaultLanguage="c"
-          onCodeSubmuit={handleCodeSubmit}
-          />
-      </Panel>
+        <div style={{display: 'flex', gap: '24px', fontSize: '14px', color: '#9ca3af'}}>
+          <span>Laxminarayana Vadnala</span>
+          <span>Patrick Do</span>
+          <span>Jude Lynch</span>
+        </div>
+      </div>
+      <Group direction="horizontal" style={{ height: '100vh' }}>
 
-      {/* Drag Handle */}
-      <Separator style={{
-        width: '6px',
-        backgroundColor: '#333',
-        cursor: 'col-resize',
-      }} />
+        {/* Left panel - code editor */}
+        <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', padding: '24px', overflow: 'hidden'}}>
+          <h2 style={{ marginTop: 0 }}>Code</h2>
+          <CodeEditor
+            defaultCode={FIBONACCI_C}
+            defaultLanguage="c"
+            onCodeSubmuit={handleCodeSubmit}
+            />
+        </Panel>
 
-      {/* Right panel - pipeline grid */}
-      <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', padding: '24px', overflow: 'auto'}}>
-        <h2 style={{ martinTop: 0 }}>Pipeline</h2>
-        <PipelineGrid data={MOCK_DATA} />
-      </Panel>
-    </Group>
+        {/* Drag Handle */}
+        <Separator style={{
+          width: '6px',
+          backgroundColor: '#333',
+          cursor: 'col-resize',
+        }} />
+
+        {/* Right panel - pipeline grid */}
+        <Panel defaultSize={50} minSize={20} style={{ display: 'flex', flexDirection: 'column', padding: '24px', overflow: 'auto'}}>
+          <h2 style={{ martinTop: 0 }}>Pipeline</h2>
+          <PipelineGrid data={MOCK_DATA} />
+        </Panel>
+      </Group>
+    </div>
   )
 }
 
