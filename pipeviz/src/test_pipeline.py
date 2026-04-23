@@ -9,23 +9,12 @@ Analyzes ARM64 assembly code and detects:
 
 import re
 from dataclasses import dataclass
-from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
+from config import ARMOpsCodeClassification, OpcodeConfig, config_parser
+from src.enum_vault.pipeline_enums import HazardType, PipelineStage
 
-class HazardType(Enum):
-    RAW = "Read After Write"  # True dependency
-    WAR = "Write After Read"  # Anti-dependency
-    WAW = "Write After Write"  # Output dependency
-    STRUCTURAL = "Structural"  # Resource conflict
-
-
-class PipelineStage(Enum):
-    FETCH = 0
-    DECODE = 1
-    EXECUTE = 2
-    MEMORY = 3
-    WRITEBACK = 4
+config: OpcodeConfig = config_parser()
 
 
 @dataclass
@@ -52,7 +41,6 @@ class Instruction:
 
     def __repr__(self):
         return f"{self.address}: {self.opcode} {self.operands}"
-
 
 
 @dataclass
@@ -103,38 +91,17 @@ class ARM64Parser:
     REGISTER_PATTERN = r"\b([xwsp]\d{1,2}|sp|xzr|wzr|lr|x29|x30)\b"
 
     # Instruction categories
-    LOAD_OPS = {"LDR", "LDRB", "LDRH", "LDRSB", "LDRSH", "LDRSW", "LDP"}
-    STORE_OPS = {"STR", "STRB", "STRH", "STP"}
-    BRANCH_OPS = {
-        "B",
-        "BL",
-        "BR",
-        "BLR",
-        "RET",
-        "B.EQ",
-        "B.NE",
-        "B.LT",
-        "B.LE",
-        "B.GT",
-        "B.GE",
-        "B.CC",
-        "B.CS",
-        "B.MI",
-        "B.PL",
-        "B.VS",
-        "B.VC",
-        "B.HI",
-        "B.LS",
-        "CBZ",
-        "CBNZ",
-        "TBZ",
-        "TBNZ",
-    }
+    LOAD_OPS = config.get_opcode_list("LOAD_OPS")
+    STORE_OPS = config.get_opcode_list("STORE_OPS")
+    BRANCH_OPS = config.get_opcode_list("BRANCH_OPS")
+    ALU_OPS = config.get_opcode_list("ALU_OPS")
+    PAIR_OPS = config.get_opcode_list("PAIR_OPS")
+    COMPARE_OPS = config.get_opcode_list("COMPARE_OPS")
+    MOV_OPS = config.get_opcode_list("MOV_OPS")
 
     @staticmethod
     def parse_instruction(line: str, pc: int) -> Optional[Instruction]:
         """Parse a single ARM64 instruction line"""
-        # Match pattern: address: opcode operands
         match = re.match(
             r"\s*([0-9a-fA-F]+):\s+(?:[0-9a-fA-F]{2,}\s+)*([a-zA-Z][a-zA-Z0-9.]*)\s*(.*)",
             line,
@@ -154,8 +121,15 @@ class ARM64Parser:
         is_branch = opcode in ARM64Parser.BRANCH_OPS
         memory_access = is_load or is_store
 
+        # Extract branch target address if present
+        branch_target_addr = None
+        if is_branch:
+            m = re.search(r"\b([0-9a-fA-F]{6,})\b", operands)
+            if m:
+                branch_target_addr = m.group(1).lower()
+
         return Instruction(
-            address=address,
+            address=address.lower(),
             opcode=opcode,
             operands=operands,
             raw=line.strip(),
@@ -166,6 +140,7 @@ class ARM64Parser:
             is_branch=is_branch,
             is_load=is_load,
             is_store=is_store,
+            branch_target_addr=branch_target_addr,
         )
 
     @staticmethod
@@ -184,7 +159,7 @@ class ARM64Parser:
         all_regs = [ARM64Parser._normalize_register(r) for r in all_regs]
 
         # Determine which registers are destinations vs sources
-        if opcode in {"MOV", "MOVZ", "MOVK", "MOVN"}:
+        if opcode in ARM64Parser.MOV_OPS:
             # MOV dest, src
             if len(all_regs) >= 1:
                 dest_regs.append(all_regs[0])
@@ -205,14 +180,14 @@ class ARM64Parser:
             if len(all_regs) >= 2:
                 src_regs.extend(all_regs[1:])  # Base register(s)
 
-        elif opcode in {"ADD", "SUB", "AND", "ORR", "EOR", "MUL", "MADD", "MSUB"}:
+        elif opcode in ARM64Parser.ALU_OPS:
             # ALU: dest, src1, src2
             if len(all_regs) >= 1:
                 dest_regs.append(all_regs[0])
             if len(all_regs) >= 2:
                 src_regs.extend(all_regs[1:])
 
-        elif opcode in {"CMP", "CMN", "TST"}:
+        elif opcode in ARM64Parser.COMPARE_OPS:
             # Compare: only sources, no destination
             src_regs.extend(all_regs)
 
@@ -220,7 +195,7 @@ class ARM64Parser:
             # Branch: may use registers
             src_regs.extend(all_regs)
 
-        elif opcode in {"STP", "LDP"}:
+        elif opcode in ARM64Parser.PAIR_OPS:
             # Pair operations
             if opcode == "STP":
                 # STP src1, src2, [base, offset]
@@ -256,16 +231,23 @@ class ARM64Parser:
 class PipelineSimulator:
     """5-stage pipeline simulator with hazard detection"""
 
-    def __init__(self, enable_forwarding: bool = True):
+    def __init__(
+        self,
+        enable_forwarding: bool = True,
+        branch_policy: str = "not_taken",
+        branch_penalty: int = 1,
+    ):
         self.enable_forwarding = enable_forwarding
+        self.branch_policy = branch_policy  # "not_taken" or "always_taken"
+        self.branch_penalty = branch_penalty
         self.instructions: List[Instruction] = []
         self.pipeline_states: List[PipelineState] = []
         self.hazards_detected: List[Hazard] = []
 
         # Pipeline configuration
         self.num_stages = 5
-        self.memory_units = 1  # Number of memory access units
-        self.alu_units = 1  # Number of ALU units
+        self.memory_units = 1
+        self.alu_units = 1
 
     def load_instructions(self, assembly_code: str):
         """Load and parse ARM64 assembly code"""
@@ -282,17 +264,22 @@ class PipelineSimulator:
                 self.instructions.append(instr)
                 pc += 1
 
+        # Map addresses to PCs so branch targets can resolve
+        addr_to_pc = {instr.address: instr.pc for instr in self.instructions}
+        for instr in self.instructions:
+            if instr.is_branch and instr.branch_target_addr:
+                instr.branch_target_pc = addr_to_pc.get(instr.branch_target_addr)
+
     def simulate(self) -> List[PipelineState]:
         """Run pipeline simulation"""
         self.pipeline_states = []
         self.hazards_detected = []
 
-        # Initialize pipeline
         pipeline = {stage: None for stage in PipelineStage}
         cycle = 0
         next_fetch_pc = 0
+        branch_bubbles_remaining = 0
 
-        # Continue until all instructions complete
         while next_fetch_pc < len(self.instructions) or any(
             v is not None for v in pipeline.values()
         ):
@@ -300,20 +287,23 @@ class PipelineSimulator:
             forwarding = []
             stalled = False
 
+            # Apply branch bubbles (no fetch)
+            fetch_allowed = True
+            if branch_bubbles_remaining > 0:
+                fetch_allowed = False
+                branch_bubbles_remaining -= 1
+
             # Check for hazards before advancing
             if pipeline[PipelineStage.DECODE] is not None:
                 decode_pc = pipeline[PipelineStage.DECODE]
                 decode_instr = self.instructions[decode_pc]
 
-                # Check for data hazards
                 data_hazards = self._detect_data_hazards(decode_instr, pipeline)
                 cycle_hazards.extend(data_hazards)
 
-                # Determine if we need to stall
                 if data_hazards and not self.enable_forwarding:
                     stalled = True
                 elif data_hazards:
-                    # Check if forwarding can resolve
                     can_forward = all(
                         h.producer_stage
                         in {PipelineStage.EXECUTE, PipelineStage.MEMORY}
@@ -323,14 +313,12 @@ class PipelineSimulator:
                     if not can_forward:
                         stalled = True
                     else:
-                        # Track forwarding
                         for h in data_hazards:
                             if h.type == HazardType.RAW:
                                 forwarding.append(
                                     (h.producer_pc, h.consumer_pc, h.resource)
                                 )
 
-            # Check for structural hazards
             structural_hazards = self._detect_structural_hazards(pipeline)
             cycle_hazards.extend(structural_hazards)
             if structural_hazards:
@@ -347,32 +335,44 @@ class PipelineSimulator:
             self.pipeline_states.append(state)
             self.hazards_detected.extend(cycle_hazards)
 
-            # Advance pipeline (if not stalled)
+            # Detect branch in EXE
+            branch_taken = False
+            branch_target = None
+            exe_pc = pipeline[PipelineStage.EXECUTE]
+            if exe_pc is not None:
+                exe_instr = self.instructions[exe_pc]
+                if exe_instr.is_branch and exe_instr.branch_target_pc is not None:
+                    if self.branch_policy == "always_taken":
+                        branch_taken = True
+                        branch_target = exe_instr.branch_target_pc
+
             if not stalled:
                 new_pipeline = {stage: None for stage in PipelineStage}
 
-                # Move instructions forward through pipeline
                 for stage in reversed(list(PipelineStage)):
                     if stage == PipelineStage.FETCH:
-                        # Fetch new instruction
-                        if next_fetch_pc < len(self.instructions):
+                        if fetch_allowed and next_fetch_pc < len(self.instructions):
                             new_pipeline[PipelineStage.FETCH] = next_fetch_pc
                             next_fetch_pc += 1
                     else:
-                        # Move from previous stage
                         prev_stage = PipelineStage(stage.value - 1)
                         new_pipeline[stage] = pipeline[prev_stage]
 
+                # Flush wrong-path IF/DECODE on taken branch
+                if branch_taken and branch_target is not None:
+                    new_pipeline[PipelineStage.FETCH] = None
+                    new_pipeline[PipelineStage.DECODE] = None
+                    next_fetch_pc = branch_target
+                    branch_bubbles_remaining = self.branch_penalty
+
                 pipeline = new_pipeline
             else:
-                # Insert bubble (NOP) in decode stage
                 new_pipeline = pipeline.copy()
                 new_pipeline[PipelineStage.DECODE] = None
                 pipeline = new_pipeline
 
             cycle += 1
 
-            # Safety check to prevent infinite loops
             if cycle > len(self.instructions) * 10:
                 print("Warning: Simulation exceeded maximum cycles")
                 break
@@ -473,6 +473,61 @@ class PipelineSimulator:
                 )
 
         return hazards
+
+    def export_csv(self, output_path: str):
+        """Export cycle-by-cycle pipeline states to CSV.
+        Output format:
+        - Row per instruction
+        - Columns are cycles (C0, C1, ...)
+        - Cells show stage name
+        - If stalled, show STAGE[STALL]
+        """
+        import csv
+
+        if not self.pipeline_states:
+            return
+
+        max_cycle = self.pipeline_states[-1].cycle
+        header = ["Instruction"] + [f"C{c}" for c in range(max_cycle + 1)]
+
+        # Precompute stage abbreviations
+        stage_abbrev = {
+            PipelineStage.FETCH: "IF",
+            PipelineStage.DECODE: "IS",
+            PipelineStage.EXECUTE: "EXE",
+            PipelineStage.MEMORY: "MEM",
+            PipelineStage.WRITEBACK: "WB",
+        }
+
+        # Build a cycle -> (pc -> stage) mapping
+        cycle_stage_map = []
+        for state in self.pipeline_states:
+            pc_to_stage = {}
+            for stage, pc in state.stages.items():
+                if pc is not None:
+                    pc_to_stage[pc] = stage
+            cycle_stage_map.append((pc_to_stage, state.stalled))
+
+        with open(output_path, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(header)
+
+            for instr in self.instructions:
+                row = [f"[{instr.pc}] {instr.address}: {instr.opcode} {instr.operands}"]
+
+                for cycle in range(max_cycle + 1):
+                    pc_to_stage, stalled = cycle_stage_map[cycle]
+
+                    if instr.pc in pc_to_stage:
+                        stage = pc_to_stage[instr.pc]
+                        cell = stage_abbrev[stage]
+                        if stalled:
+                            cell = f"{cell}[STALL]"
+                        row.append(cell)
+                    else:
+                        row.append("")
+
+                writer.writerow(row)
 
     def print_simulation(self):
         """Print detailed simulation output"""
@@ -588,6 +643,7 @@ def main():
     sim_forward.load_instructions(fibonacci_asm)
     sim_forward.simulate()
     sim_forward.print_simulation()
+    sim_forward.export_csv("sim_forward.csv")
 
     # Simulate without forwarding
     print("\n" + "=" * 100)
@@ -597,6 +653,7 @@ def main():
     sim_no_forward.load_instructions(fibonacci_asm)
     sim_no_forward.simulate()
     sim_no_forward.print_simulation()
+    sim_no_forward.export_csv("sim_no_forward.csv")
 
 
 if __name__ == "__main__":

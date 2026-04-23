@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import Enum, StrEnum
 
 
 class PipelineTypes(StrEnum):
@@ -11,7 +11,16 @@ class PipelineTypes(StrEnum):
     OUT_OF_ORDER = "out_of_order"
 
 
-class DataHazardTypes(StrEnum):
-    RAW = "read_after_write"
-    WAR = "write_after_read"
-    WAW = "write_after_write"
+class HazardType(StrEnum):
+    RAW = "Read After Write"  # True dependency
+    WAR = "Write After Read"  # Anti-dependency
+    WAW = "Write After Write"  # Output dependency
+    STRUCTURAL = "Structural"  # Resource conflict
+
+
+class PipelineStage(Enum):
+    FETCH = 0
+    DECODE = 1
+    EXECUTE = 2
+    MEMORY = 3
+    WRITEBACK = 4

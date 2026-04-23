@@ -136,6 +136,6 @@ class PipeVizWorkflow:
 
 
 if __name__ == "__main__":
-    workflow = PipeVizWorkflow(SupportedProgrammingLanguagesEnum.CPP)
-    result = workflow.generate_asembly_code(workflow._paths.cpp_mock_path)
+    workflow = PipeVizWorkflow(SupportedProgrammingLanguagesEnum.RUST)
+    result = workflow.generate_asembly_code(workflow._paths.rust_mock_path)
     logger.info(result)

@@ -1,0 +1,196 @@
+# AArch64 Opcode Classification for _parse_operands
+opcodes:
+  MOV_OPS:
+    - MOV
+    - MOVK
+    - MOVN
+    - MOVZ
+    - FMOV
+    - MVN
+
+  LOAD_OPS:
+    - LDR
+    - LDRB
+    - LDRH
+    - LDRSB
+    - LDRSH
+    - LDRSW
+    - LDUR
+    - LDURB
+    - LDURH
+    - LDURSB
+    - LDURSH
+    - LDURSW
+    - LDAR
+    - LDARB
+    - LDARH
+    - LDAXR
+    - LDAXRB
+    - LDAXRH
+    - LDXR
+    - LDXRB
+    - LDXRH
+    - LDTR
+    - LDTRB
+    - LDTRH
+    - LDTRSB
+    - LDTRSH
+    - LDTRSW
+    - PRFM # Prefetch memory is structurally parsed similarly to loads
+
+  STORE_OPS:
+    - STR
+    - STRB
+    - STRH
+    - STUR
+    - STURB
+    - STURH
+    - STLR
+    - STLRB
+    - STLRH
+    - STLXR
+    - STLXRB
+    - STLXRH
+    - STXR
+    - STXRB
+    - STXRH
+    - STTR
+    - STTRB
+    - STTRH
+
+  PAIR_OPS:
+    - LDP
+    - LDNP
+    - LDPSW
+    - STP
+    - STNP
+
+  ALU_OPS:
+    # Basic Arithmetic
+    - ADD
+    - ADDS
+    - SUB
+    - SUBS
+    - ADC
+    - ADCS
+    - SBC
+    - SBCS
+    # Logical
+    - AND
+    - ANDS
+    - BIC
+    - BICS
+    - EON
+    - EOR
+    - ORN
+    - ORR
+    # Shifts
+    - LSL
+    - LSR
+    - ASR
+    - ROR
+    # Multiplication & Division
+    - MUL
+    - MADD
+    - MSUB
+    - SMULL
+    - UMULL
+    - SMADDL
+    - SMSUBL
+    - UMADDL
+    - UMSUBL
+    - SDIV
+    - UDIV
+    # Conditional selection
+    - CSEL
+    - CSET
+    - CSETM
+    - CSINC
+    - CSINV
+    - CSNEG
+    # Bitfield & Extract
+    - BFM
+    - SBFM
+    - UBFM
+    - BFC
+    - BFI
+    - EXTR
+    - SXTB
+    - SXTH
+    - SXTW
+    - UXTB
+    - UXTH
+    - UXTW
+    # Data Processing
+    - REV
+    - REV16
+    - REV32
+    - CLZ
+    - CLS
+    - RBIT
+    # Floating Point ALU
+    - FADD
+    - FSUB
+    - FMUL
+    - FDIV
+    - FMADD
+    - FMSUB
+    - FNMADD
+    - FNMSUB
+    - FMAX
+    - FMIN
+    - FMAXNM
+    - FMINNM
+    - FABS
+    - FNEG
+    - FSQRT
+    # Floating point conversions
+    - SCVTF
+    - UCVTF
+    - FCVTZS
+    - FCVTZU
+
+  COMPARE_OPS:
+    # Integer compares
+    - CMP
+    - CMN
+    - TST
+    - TEQ
+    - CCMP
+    - CCMN
+    # Floating point compares
+    - FCMP
+    - FCCMP
+    - FCCMPE
+    - FCMPE
+
+  BRANCH_OPS:
+    # Unconditional
+    - B
+    - BR
+    - BL
+    - BLR
+    - RET
+    # Compare & Branch
+    - CBZ
+    - CBNZ
+    - TBZ
+    - TBNZ
+    # Conditional Branches
+    - B.EQ
+    - B.NE
+    - B.CS
+    - B.HS
+    - B.CC
+    - B.LO
+    - B.MI
+    - B.PL
+    - B.VS
+    - B.VC
+    - B.HI
+    - B.LS
+    - B.GE
+    - B.LT
+    - B.GT
+    - B.LE
+    - B.AL
