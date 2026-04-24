@@ -1,7 +1,7 @@
 import re
 
 
-def extract_function_assembly(asm_text: str, func_name: str) -> str:
+def extract_function_assembly(asm_text: str, func_name: str) -> list[str]:
     """
     Extracts the complete assembly block for a given function from objdump text.
 
@@ -50,7 +50,7 @@ def extract_function_assembly(asm_text: str, func_name: str) -> str:
             captured_lines.append(line)
 
     # Strip any trailing empty lines from the extracted block
-    return "\n".join(captured_lines).rstrip()
+    return captured_lines
 
 
 # ==========================================

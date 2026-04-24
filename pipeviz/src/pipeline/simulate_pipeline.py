@@ -8,80 +8,19 @@ Analyzes ARM64 assembly code and detects:
 """
 
 import re
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
-from config import ARMOpsCodeClassification, OpcodeConfig, config_parser
+from loguru import logger
+
+from src.config import (
+    Hazard,
+    Instruction,
+    OpcodeConfig,
+    PipelineState,
+    config_parser,
+)
 from src.enum_vault.pipeline_enums import HazardType, PipelineStage
 
 config: OpcodeConfig = config_parser()
-
-
-@dataclass
-class Instruction:
-    """Represents a single ARM64 instruction"""
-
-    address: str
-    opcode: str
-    operands: str
-    raw: str
-    pc: int  # Program counter (instruction index)
-
-    # Parsed operands
-    dest_regs: List[str]  # Registers written to
-    src_regs: List[str]  # Registers read from
-    memory_access: bool  # Does this instruction access memory?
-    is_branch: bool  # Is this a branch/jump?
-    is_load: bool  # Is this a load instruction?
-    is_store: bool  # Is this a store instruction?
-
-    # Branch info
-    branch_target_addr: Optional[str] = None
-    branch_target_pc: Optional[int] = None
-
-    def __repr__(self):
-        return f"{self.address}: {self.opcode} {self.operands}"
-
-
-@dataclass
-class Hazard:
-    """Represents a detected hazard"""
-
-    type: HazardType
-    cycle: int
-    producer_pc: int
-    consumer_pc: int
-    producer_stage: PipelineStage
-    consumer_stage: PipelineStage
-    resource: str  # Register name or resource name
-
-    def __repr__(self):
-        return (
-            f"{self.type.value} Hazard at cycle {self.cycle}: "
-            f"Instr {self.producer_pc} ({self.producer_stage.name}) -> "
-            f"Instr {self.consumer_pc} ({self.consumer_stage.name}) "
-            f"on {self.resource}"
-        )
-
-
-@dataclass
-class PipelineState:
-    """State of pipeline at a given cycle"""
-
-    cycle: int
-    stages: Dict[PipelineStage, Optional[int]]  # Stage -> instruction PC
-    stalled: bool
-    hazards: List[Hazard]
-    forwarding: List[Tuple[int, int, str]]  # (from_pc, to_pc, register)
-
-    def __repr__(self):
-        stage_str = " | ".join(
-            [
-                f"{stage.name}: {pc if pc is not None else '-'}"
-                for stage, pc in self.stages.items()
-            ]
-        )
-        return f"Cycle {self.cycle}: [{stage_str}]" + (" STALL" if self.stalled else "")
 
 
 class ARM64Parser:
@@ -100,7 +39,7 @@ class ARM64Parser:
     MOV_OPS = config.get_opcode_list("MOV_OPS")
 
     @staticmethod
-    def parse_instruction(line: str, pc: int) -> Optional[Instruction]:
+    def parse_instruction(line: str, pc: int) -> Instruction | None:
         """Parse a single ARM64 instruction line"""
         match = re.match(
             r"\s*([0-9a-fA-F]+):\s+(?:[0-9a-fA-F]{2,}\s+)*([a-zA-Z][a-zA-Z0-9.]*)\s*(.*)",
@@ -144,7 +83,7 @@ class ARM64Parser:
         )
 
     @staticmethod
-    def _parse_operands(opcode: str, operands: str) -> Tuple[List[str], List[str]]:
+    def _parse_operands(opcode: str, operands: str) -> tuple[list[str], list[str]]:
         """Parse operands to extract destination and source registers"""
         dest_regs = []
         src_regs = []
@@ -240,21 +179,21 @@ class PipelineSimulator:
         self.enable_forwarding = enable_forwarding
         self.branch_policy = branch_policy  # "not_taken" or "always_taken"
         self.branch_penalty = branch_penalty
-        self.instructions: List[Instruction] = []
-        self.pipeline_states: List[PipelineState] = []
-        self.hazards_detected: List[Hazard] = []
+        self.instructions: list[Instruction] = []
+        self.pipeline_states: list[PipelineState] = []
+        self.hazards_detected: list[Hazard] = []
 
         # Pipeline configuration
         self.num_stages = 5
         self.memory_units = 1
         self.alu_units = 1
 
-    def load_instructions(self, assembly_code: str):
+    def load_instructions(self, assembly_code_lines: list[str]):
         """Load and parse ARM64 assembly code"""
         self.instructions = []
         pc = 0
 
-        for line in assembly_code.split("\n"):
+        for line in assembly_code_lines:
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
@@ -270,7 +209,7 @@ class PipelineSimulator:
             if instr.is_branch and instr.branch_target_addr:
                 instr.branch_target_pc = addr_to_pc.get(instr.branch_target_addr)
 
-    def simulate(self) -> List[PipelineState]:
+    def simulate(self) -> list[PipelineState]:
         """Run pipeline simulation"""
         self.pipeline_states = []
         self.hazards_detected = []
@@ -374,12 +313,12 @@ class PipelineSimulator:
             cycle += 1
 
             if cycle > len(self.instructions) * 10:
-                print("Warning: Simulation exceeded maximum cycles")
+                logger.info("Warning: Simulation exceeded maximum cycles")
                 break
 
         return self.pipeline_states
 
-    def _detect_data_hazards(self, instr: Instruction, pipeline: Dict) -> List[Hazard]:
+    def _detect_data_hazards(self, instr: Instruction, pipeline: dict) -> list[Hazard]:
         """Detect RAW, WAR, WAW data hazards"""
         hazards = []
 
@@ -445,7 +384,7 @@ class PipelineSimulator:
 
         return hazards
 
-    def _detect_structural_hazards(self, pipeline: Dict) -> List[Hazard]:
+    def _detect_structural_hazards(self, pipeline: dict) -> list[Hazard]:
         """Detect structural hazards (resource conflicts)"""
         hazards = []
 
@@ -530,77 +469,74 @@ class PipelineSimulator:
                 writer.writerow(row)
 
     def print_simulation(self):
-        """Print detailed simulation output"""
-        print("=" * 100)
-        print("ARM64 PIPELINE SIMULATION")
-        print("=" * 100)
-        print(f"Total Instructions: {len(self.instructions)}")
-        print(f"Forwarding: {'Enabled' if self.enable_forwarding else 'Disabled'}")
-        print(f"Pipeline Stages: {self.num_stages}")
-        print()
+        """logger.info detailed simulation output"""
+        logger.info("=" * 100)
+        logger.info("ARM64 PIPELINE SIMULATION")
+        logger.info("=" * 100)
+        logger.info(f"Total Instructions: {len(self.instructions)}")
+        logger.info(
+            f"Forwarding: {'Enabled' if self.enable_forwarding else 'Disabled'}"
+        )
+        logger.info(f"Pipeline Stages: {self.num_stages}")
 
-        # Print instruction listing
-        print("INSTRUCTION LISTING:")
-        print("-" * 100)
+        # logger.info instruction listing
+        logger.info("INSTRUCTION LISTING:")
+        logger.info("-" * 100)
         for instr in self.instructions:
             dest = f"Dest: {instr.dest_regs}" if instr.dest_regs else ""
             src = f"Src: {instr.src_regs}" if instr.src_regs else ""
-            print(
+            logger.info(
                 f"[{instr.pc:2d}] {instr.address}: {instr.opcode:8s} {instr.operands:30s} {dest:20s} {src}"
             )
-        print()
-
-        # Print cycle-by-cycle execution
-        print("CYCLE-BY-CYCLE EXECUTION:")
-        print("-" * 100)
+        # logger.info cycle-by-cycle execution
+        logger.info("CYCLE-BY-CYCLE EXECUTION:")
+        logger.info("-" * 100)
         for state in self.pipeline_states:
-            print(f"\nCycle {state.cycle:3d}:")
+            logger.info(f"\nCycle {state.cycle:3d}:")
 
-            # Print pipeline stages
+            # logger.info pipeline stages
             for stage in PipelineStage:
                 pc = state.stages[stage]
                 if pc is not None:
                     instr = self.instructions[pc]
-                    print(
+                    logger.info(
                         f"  {stage.name:10s}: [{pc:2d}] {instr.opcode} {instr.operands}"
                     )
                 else:
-                    print(f"  {stage.name:10s}: [--] (empty)")
+                    logger.info(f"  {stage.name:10s}: [--] (empty)")
 
-            # Print hazards
+            # logger.info hazards
             if state.hazards:
-                print(f"  {'HAZARDS':10s}:")
+                logger.info(f"  {'HAZARDS':10s}:")
                 for hazard in state.hazards:
-                    print(f"    - {hazard}")
+                    logger.info(f"    - {hazard}")
 
-            # Print forwarding
+            # logger.info forwarding
             if state.forwarding:
-                print(f"  {'FORWARD':10s}:")
+                logger.info(f"  {'FORWARD':10s}:")
                 for from_pc, to_pc, reg in state.forwarding:
-                    print(f"    - Forward {reg} from [{from_pc}] to [{to_pc}]")
+                    logger.info(f"    - Forward {reg} from [{from_pc}] to [{to_pc}]")
 
             if state.stalled:
-                print(f"  {'STATUS':10s}: **STALLED**")
+                logger.info(f"  {'STATUS':10s}: **STALLED**")
 
-        print()
-
-        # Print summary
-        print("SUMMARY:")
-        print("-" * 100)
-        print(f"Total Cycles: {len(self.pipeline_states)}")
-        print(f"Total Stalls: {sum(1 for s in self.pipeline_states if s.stalled)}")
-        print(f"CPI: {len(self.pipeline_states) / len(self.instructions):.2f}")
-        print()
+        # logger.info summary
+        logger.info("SUMMARY:")
+        logger.info("-" * 100)
+        logger.info(f"Total Cycles: {len(self.pipeline_states)}")
+        logger.info(
+            f"Total Stalls: {sum(1 for s in self.pipeline_states if s.stalled)}"
+        )
+        logger.info(f"CPI: {len(self.pipeline_states) / len(self.instructions):.2f}")
 
         # Hazard statistics
         hazard_types = {}
         for hazard in self.hazards_detected:
             hazard_types[hazard.type] = hazard_types.get(hazard.type, 0) + 1
 
-        print("HAZARD STATISTICS:")
+        logger.info("HAZARD STATISTICS:")
         for htype, count in hazard_types.items():
-            print(f"  {htype.value:20s}: {count}")
-        print()
+            logger.info(f"  {htype.value:20s}: {count}")
 
 
 def main():
@@ -632,13 +568,12 @@ def main():
     # Keep the first N *instructions* (not raw lines)
     fibonacci_asm = "\n".join(fib_lines[:20])
 
-    print("Analyzing Fibonacci function...")
-    print()
+    logger.info("Analyzing Fibonacci function...")
 
     # Simulate with forwarding
-    print("\n" + "=" * 100)
-    print("SIMULATION WITH FORWARDING")
-    print("=" * 100)
+    logger.info("\n" + "=" * 100)
+    logger.info("SIMULATION WITH FORWARDING")
+    logger.info("=" * 100)
     sim_forward = PipelineSimulator(enable_forwarding=True)
     sim_forward.load_instructions(fibonacci_asm)
     sim_forward.simulate()
@@ -646,9 +581,9 @@ def main():
     sim_forward.export_csv("sim_forward.csv")
 
     # Simulate without forwarding
-    print("\n" + "=" * 100)
-    print("SIMULATION WITHOUT FORWARDING")
-    print("=" * 100)
+    logger.info("\n" + "=" * 100)
+    logger.info("SIMULATION WITHOUT FORWARDING")
+    logger.info("=" * 100)
     sim_no_forward = PipelineSimulator(enable_forwarding=False)
     sim_no_forward.load_instructions(fibonacci_asm)
     sim_no_forward.simulate()
