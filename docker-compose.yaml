@@ -33,8 +33,22 @@ services:
       - PYTHONUNBUFFERED=1
       - ENV=development
     volumes:
-      - ./pipeviz/src:/app/src # Hot reload for source code
-      - ./pipeviz/main.py:/app/main.py # Hot reload for main entry point
+      - source: ./pipeviz/src
+        target: /app/src
+        read_only: false
+        type: bind
+      - source: ./pipeviz/main.py
+        target: /app/main.py
+        read_only: false
+        type: bind
+      - source: "./pipeviz/runs"
+        target: "/app/runs"
+        read_only: false
+        type: bind
+      - source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: false
+        type: bind
     networks:
       - pipeviz-network
 

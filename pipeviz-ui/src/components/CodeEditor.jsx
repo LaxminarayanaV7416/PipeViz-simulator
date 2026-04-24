@@ -20,6 +20,8 @@ export default function CodeEditor({
   const [code, setCode] = useState(defaultCode);
   const [languages, setLanguages] = useState([]);
   const fileInputRef = useRef(null);
+  const [pipelines, setPipelines] = useState([]);
+  const [selectedPipeline, setSelectedPipeline] = useState("");
 
   useEffect(() => {
     setCode(defaultCode);
@@ -70,6 +72,35 @@ export default function CodeEditor({
     }
 
     fetchLanguages();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchPipelines() {
+      const res = await callApi({
+        httpMethod: "GET",
+        httpUrl: "/api/supported_pipelines",
+      });
+
+      if (!isMounted) return;
+
+      if (res.ok && res.data && Array.isArray(res.data.supported_pipelines)) {
+        setPipelines(res.data.supported_pipelines);
+        setSelectedPipeline(
+          (current) => current || res.data.supported_pipelines[0] || "",
+        );
+      } else {
+        setPipelines([]);
+        setSelectedPipeline("");
+      }
+    }
+
+    fetchPipelines();
 
     return () => {
       isMounted = false;
@@ -133,6 +164,18 @@ export default function CodeEditor({
         ))}
       </select>
 
+      <label style={{ marginRight: "8px", fontSize: "14px" }}>Pipeline:</label>
+      <select
+        value={selectedPipeline}
+        onChange={(e) => setSelectedPipeline(e.target.value)}
+        style={{ padding: "6px 10px", fontSize: "14px" }}
+      >
+        {pipelines.map((p) => (
+          <option key={p} value={p}>
+            {p}
+          </option>
+        ))}
+      </select>
       <input
         ref={fileInputRef}
         type="file"
@@ -141,13 +184,13 @@ export default function CodeEditor({
         onChange={handleFileUpload}
         style={{ display: "none" }}
       />
+
       <button
         onClick={() => fileInputRef.current.click()}
         style={{ width: "fit-content" }}
       >
         Upload File
       </button>
-
       <div style={{ flex: 1, overflow: "auto", fontSize: "15px" }}>
         <CodeMirror
           value={code}

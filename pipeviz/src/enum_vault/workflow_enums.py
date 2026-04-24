@@ -76,7 +76,10 @@ class WorkflowPaths:
 
     @property
     def runs(self) -> Path:
-        return self._base_path / "runs"
+        path = (self._base_path / "runs").resolve()
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
+        return path
 
     @property
     def rust_docker_file(self) -> Path:
