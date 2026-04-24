@@ -1,4 +1,12 @@
 import re
+from argparse import ArgumentParser
+
+
+def get_args():
+    parser = ArgumentParser()
+    parser.add_argument("--port", type=int, default=5001)
+    parser.add_argument("--reload", type=bool, default=True)
+    return parser.parse_args()
 
 
 def extract_function_assembly(asm_text: str, func_name: str) -> list[str]:

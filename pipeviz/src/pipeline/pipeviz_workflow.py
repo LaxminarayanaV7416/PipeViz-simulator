@@ -48,30 +48,45 @@ class PipeVizWorkflow:
             logger.error(e)
             return False
 
-    def run_shell_command(self, command: list | str) -> tuple[bool, str]:
+    def execute_command(self, cmd_list: list[str]) -> tuple[bool, list[str]]:
+        """Executes a command, logs output live, and fails on non-zero exit."""
+        result: list[str] = []
         try:
-            response = subprocess.run(
-                command, capture_output=True, text=True, check=True
+            process = subprocess.Popen(
+                cmd_list,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
             )
-            if self.validate_shell_execution(response):
-                return True, response.stdout
-            else:
-                return False, response.stderr
-        except subprocess.CalledProcessError as error:
-            logger.error(error)
-            return False, str(error)
 
-    def validate_shell_execution(
-        self, response: subprocess.CompletedProcess | str
-    ) -> bool:
-        if isinstance(response, subprocess.CompletedProcess):
-            return response.returncode == 0
-        return False
+            if process.stdout:
+                for line in process.stdout:
+                    temp = line.rstrip("\n")
+                    result.append(temp)
+                    if temp:
+                        logger.info(temp)
+
+            return_code = process.wait()
+
+            if return_code != 0:
+                logger.error(f"Failed! Process exited with code {return_code}")
+                return False, result
+
+            return True, result
+
+        except Exception as e:
+            logger.exception(f"An exception occurred running the command: {e}")
+            return False, result
+
+    def clean(self) -> None:
+        if self.run_path.exists():
+            shutil.rmtree(self.run_path)
 
     def generate_asembly_code(
         self,
         code_path: Path,
-    ) -> tuple[bool, str | Path]:
+    ) -> tuple[bool, list[str] | Path]:
         asm_path = self.run_path / "main.asm"
         program_file_name = code_path.name
         if self._programming_language == SupportedProgrammingLanguagesEnum.RUST:
@@ -99,36 +114,30 @@ class PipeVizWorkflow:
             self.run_path / docker_file_name.value,
             program_file_name,
         )
-        executed, response = self.run_shell_command(docker_build_command)
+        executed, response = self.execute_command(docker_build_command)
         if not executed:
             return False, response
 
         # step 4: create docker so that we can actually copy the asm
         docker_create_command = self._commands.docker_create(str(self._id))
-        executed, response = self.run_shell_command(docker_create_command)
+        executed, response = self.execute_command(docker_create_command)
         if not executed:
             return False, response
 
-        container_id = response.strip()  # figure out its true or not
+        container_id = response[0].strip()  # figure out its true or not
         logger.info("We generated the container id as it is: ", container_id)
 
         # step 5: copy generated assembly from the built docker file
         docker_copy_command = self._commands.docker_copy(
             container_id, self._programming_language, str(self.run_path)
         )
-        executed, response = self.run_shell_command(docker_copy_command)
+        executed, response = self.execute_command(docker_copy_command)
         if not executed:
             return False, response
 
-        # # step 6: remove the docker container
-        # docker_remove_command = self._commands.docker_remove(container_id)
-        # executed, _ = self.run_shell_command(docker_remove_command)
-        # if not executed:
-        #     return False, response
-
         # step 7: clean docker image from cache
         docker_image_delete_command = self._commands.docker_image_delete(str(self._id))
-        executed, _ = self.run_shell_command(docker_image_delete_command)
+        executed, response = self.execute_command(docker_image_delete_command)
         if not executed:
             return False, response
 

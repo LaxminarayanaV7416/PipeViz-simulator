@@ -468,6 +468,59 @@ class PipelineSimulator:
 
                 writer.writerow(row)
 
+    def convert_to_json(self):
+        """Export cycle-by-cycle pipeline states to CSV.
+        Output format:
+        - Row per instruction
+        - Columns are cycles (C0, C1, ...)
+        - Cells show stage name
+        - If stalled, show STAGE[STALL]
+        """
+        if not self.pipeline_states:
+            return
+
+        max_cycle = self.pipeline_states[-1].cycle
+
+        # Precompute stage abbreviations
+        stage_abbrev = {
+            PipelineStage.FETCH: "IF",
+            PipelineStage.DECODE: "IS",
+            PipelineStage.EXECUTE: "EXE",
+            PipelineStage.MEMORY: "MEM",
+            PipelineStage.WRITEBACK: "WB",
+        }
+
+        # Build a cycle -> (pc -> stage) mapping
+        cycle_stage_map = []
+        for state in self.pipeline_states:
+            pc_to_stage = {}
+            for stage, pc in state.stages.items():
+                if pc is not None:
+                    pc_to_stage[pc] = stage
+            cycle_stage_map.append((pc_to_stage, state.stalled))
+
+        json_data = []
+
+        for instr in self.instructions:
+            instruction = (
+                f"[{instr.pc}] {instr.address}: {instr.opcode} {instr.operands}"
+            )
+            row = {"instruction": instruction}
+            for cycle in range(max_cycle + 1):
+                pc_to_stage, stalled = cycle_stage_map[cycle]
+
+                if instr.pc in pc_to_stage:
+                    stage = pc_to_stage[instr.pc]
+                    cell = stage_abbrev[stage]
+                    if stalled:
+                        cell = f"{cell}[STALL]"
+                    row[f"C{cycle}"] = cell
+                else:
+                    row[f"C{cycle}"] = ""
+
+            json_data.append(row)
+        return json_data
+
     def print_simulation(self):
         """logger.info detailed simulation output"""
         logger.info("=" * 100)

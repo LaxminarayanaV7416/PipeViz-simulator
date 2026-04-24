@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
+from src.pipeline.utils import get_args
 from src.routers import pipeline_router
 
 
@@ -39,4 +40,5 @@ app.add_middleware(
 app.include_router(pipeline_router.router)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=5001, reload=True)
+    args = get_args()
+    uvicorn.run("main:app", host="0.0.0.0", port=args.port, reload=args.reload)

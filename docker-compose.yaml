@@ -8,14 +8,14 @@ services:
       dockerfile: Dockerfile
     container_name: pipeviz-ui
     ports:
-      - "5173:5173"  # Vite default dev server port
+      - "5173:5173" # Vite default dev server port
     environment:
       - NODE_ENV=development
       - VITE_API_URL=http://pipeviz:8000
     volumes:
-      - ./pipeviz-ui/src:/usr/src/app/src  # Hot reload for source files
-      - ./pipeviz-ui/index.html:/usr/src/app/index.html  # Hot reload for index.html
-      - ./pipeviz-ui/public:/usr/src/app/public  # Hot reload for public assets
+      - ./pipeviz-ui/src:/usr/src/app/src # Hot reload for source files
+      - ./pipeviz-ui/index.html:/usr/src/app/index.html # Hot reload for index.html
+      - ./pipeviz-ui/public:/usr/src/app/public # Hot reload for public assets
     depends_on:
       - pipeviz
     networks:
@@ -28,16 +28,15 @@ services:
       dockerfile: Dockerfile
     container_name: pipeviz
     ports:
-      - "8000:8000"
+      - "8000:5000"
     environment:
       - PYTHONUNBUFFERED=1
       - ENV=development
     volumes:
-      - ./pipeviz/src:/app/src  # Hot reload for source code
-      - ./pipeviz/main.py:/app/main.py  # Hot reload for main entry point
+      - ./pipeviz/src:/app/src # Hot reload for source code
+      - ./pipeviz/main.py:/app/main.py # Hot reload for main entry point
     networks:
       - pipeviz-network
-    command: uv run main.py
 
 networks:
   pipeviz-network:

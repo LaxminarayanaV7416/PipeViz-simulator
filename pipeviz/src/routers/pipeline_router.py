@@ -5,11 +5,17 @@ Authors:
     - Laxminarayana Vadnala <lvadnala@nd.edu>
 """
 
+from pathlib import Path
+
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
+from src.config import BASE_PATH
 from src.enum_vault.pipeline_enums import HazardType, PipelineStage, PipelineTypes
-from src.enum_vault.workflow_enums import SupportedProgrammingLanguagesEnum
+from src.enum_vault.workflow_enums import (
+    SupportedProgrammingLanguagesEnum,
+    WorkflowPaths,
+)
 from src.models.pipeline_router_models import (
     DataHazardResponseModel,
     LanguageResponseModel,
@@ -52,18 +58,28 @@ async def get_supported_data_hazards():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get("/get_code")
-async def get_code():
+@router.get("/get_mock_code")
+async def get_mock_code(language: SupportedProgrammingLanguagesEnum):
     try:
-        return {"code": ""}
+        paths = WorkflowPaths(BASE_PATH)
+        if language == SupportedProgrammingLanguagesEnum.C:
+            code_path = paths.c_mock_path
+        elif language == SupportedProgrammingLanguagesEnum.CPP:
+            code_path = paths.cpp_mock_path
+        else:
+            code_path = paths.rust_mock_path
+
+        with code_path.open("r") as f:
+            code = f.readlines()
+        return {"code": code}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/simulate_pipelines", response_model=None)
 async def simulate_pipelines(
-    code: str,
     language: SupportedProgrammingLanguagesEnum,
+    code: str = "",
     mock_exsisting_code: bool = False,
     function_name: str = "main",
     pipeline_type: PipelineTypes = PipelineTypes.STATIC,
@@ -74,9 +90,13 @@ async def simulate_pipelines(
         workflow = PipeVizWorkflow(language)
 
         if mock_exsisting_code:
-            result, asm_path = workflow.generate_asembly_code(
-                workflow._paths.rust_mock_path
-            )
+            if language == SupportedProgrammingLanguagesEnum.RUST:
+                code_path = workflow._paths.rust_mock_path
+            elif language == SupportedProgrammingLanguagesEnum.C:
+                code_path = workflow._paths.c_mock_path
+            elif language == SupportedProgrammingLanguagesEnum.CPP:
+                code_path = workflow._paths.cpp_mock_path
+            result, asm_path = workflow.generate_asembly_code(code_path)
         else:
             # we are not running mock code, so we use the provided code
             if language == SupportedProgrammingLanguagesEnum.RUST:
@@ -86,19 +106,26 @@ async def simulate_pipelines(
             elif language == SupportedProgrammingLanguagesEnum.CPP:
                 code_path = workflow.run_path / "main.cpp"
 
+            # lets write some pre checks to fail early
+            if function_name not in code:  # dont lower since we expect the exact match
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="function_name not found in code",
+                )
+
             with open(code_path, "w") as f:
                 f.write(code)
 
             result, asm_path = workflow.generate_asembly_code(code_path)
 
-        if not result:
+        if not result and not isinstance(asm_path, Path):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to generate assembly code: {asm_path}",
             )
 
         # read the assembly code
-        with open(asm_path, "r") as f:
+        with asm_path.open("r") as f:
             asm_code = f.read()
 
         # Extract just the function (only real instruction lines)
@@ -119,17 +146,10 @@ async def simulate_pipelines(
         sim_forward.load_instructions(function_lines)
         sim_forward.simulate()
         sim_forward.print_simulation()
-        sim_forward.export_csv("sim_forward.csv")
+        json_data = sim_forward.convert_to_json()
 
-        # Simulate without forwarding
-        logger.info("SIMULATION WITHOUT FORWARDING")
-        logger.info("=" * 100)
-        sim_no_forward = PipelineSimulator(enable_forwarding=False)
-        sim_no_forward.load_instructions(function_lines)
-        sim_no_forward.simulate()
-        sim_no_forward.print_simulation()
-        sim_no_forward.export_csv("sim_no_forward.csv")
+        workflow.clean()
 
-        return {"pipelines": []}
+        return {"pipelines": json_data}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

@@ -6,7 +6,7 @@ from pydantic import BaseModel, field_validator
 
 from src.enum_vault.pipeline_enums import HazardType, PipelineStage
 
-BASE_PATH = Path(__file__).parent
+BASE_PATH = (Path(__file__).parent / "..").resolve()
 OPSCODE_YAML_PATH = BASE_PATH / "assembly_assets" / "aarch64_opcodes.yaml"
 
 
