@@ -11,7 +11,7 @@ services:
       - "5173:5173" # Vite default dev server port
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://pipeviz:8000
+      - VITE_API_BASE_URL=http://localhost:8000
     volumes:
       - ./pipeviz-ui/src:/usr/src/app/src # Hot reload for source files
       - ./pipeviz-ui/index.html:/usr/src/app/index.html # Hot reload for index.html
