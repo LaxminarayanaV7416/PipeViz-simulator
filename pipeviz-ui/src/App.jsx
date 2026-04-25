@@ -1,25 +1,19 @@
 import { useState, useEffect } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
-import FileUpload from "./components/FileUpload";
 import CodeEditor from "./components/CodeEditor";
 import PipelineGrid from "./components/PipelineGrid";
+import ProcessorConfigModal from "./components/config/ProcessorConfigModal";
 import { callApi } from "./components/util";
 import "./App.css";
-
-const MOCK_DATA = {
-  totalCycles: 48,
-  instructions: [
-    { label: "8ab4: sub sp, sp, #0x40", ifCycle: 1 },
-    { label: "8ab8: stp x29, x30, [sp, #48]", ifCycle: 2 },
-    { label: "8abc: add x29, sp, #0x30", ifCycle: 3 },
-    { label: "8ac0: stur w0, [x29, #-20]", ifCycle: 6 },
-    { label: "8ac4: stur w0, [x29, #-4]", ifCycle: 7 },
-  ],
-};
 
 function App() {
   const [language, setLanguage] = useState("rust");
   const [code, setCode] = useState("");
+  const [processorConfig, setProcessorConfig] = useState(null);
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [pipelineRows, setPipelineRows] = useState(null);
+  const [simLoading, setSimLoading] = useState(false);
+  const [simError, setSimError] = useState(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -47,9 +41,32 @@ function App() {
     };
   }, [language]);
 
-  function handleCodeSubmit({ code, language }) {
-    console.log("User submitted code:", { language, code });
-    //later: send to backend API
+  async function handleCodeSubmit({ code, language }) {
+    setSimLoading(true);
+    setSimError(null);
+
+    const res = await callApi({
+      httpMethod: "POST",
+      httpUrl: "/api/simulate_pipelines",
+      jsonData: {
+        language,
+        code,
+        function_name: "main",
+        processor_config: processorConfig ?? null,
+      },
+    });
+
+    setSimLoading(false);
+
+    if (res.ok && res.data?.pipelines) {
+      setPipelineRows(res.data.pipelines);
+    } else {
+      setSimError(res.data?.detail ?? "Simulation failed.");
+    }
+  }
+
+  function handleConfigConfirm(config) {
+    setProcessorConfig(config);
   }
 
   return (
@@ -62,7 +79,7 @@ function App() {
           justifyContent: "space-between",
           padding: "10px 24px",
           borderBottom: "1px solid #333",
-          flexShrine: 0,
+          flexShrink: 0,
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -74,20 +91,54 @@ function App() {
           <h1 style={{ margin: 0, fontSize: "22px" }}>PipeViz</h1>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            gap: "24px",
-            fontSize: "14px",
-            color: "#9ca3af",
-          }}
-        >
-          <span>Laxminarayana Vadnala</span>
-          <span>Patrick Do</span>
-          <span>Jude Lynch</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          {/* Processor config button */}
+          <button
+            onClick={() => setShowConfigModal(true)}
+            style={{
+              alignItems: "center",
+              backgroundColor: processorConfig ? "#0f2d1f" : "#1e1e1e",
+              border: `1px solid ${processorConfig ? "#10b981" : "#444"}`,
+              borderRadius: "6px",
+              color: processorConfig ? "#10b981" : "#9ca3af",
+              cursor: "pointer",
+              display: "flex",
+              fontSize: "13px",
+              gap: "8px",
+              padding: "6px 14px",
+            }}
+          >
+            <span>⚙</span>
+            <span>
+              {processorConfig
+                ? `Processor: ${processorConfig.scheduling_policy}`
+                : "Configure Processor"}
+            </span>
+            <span
+              style={{
+                backgroundColor: processorConfig ? "#10b981" : "#333",
+                borderRadius: "10px",
+                color: processorConfig ? "#fff" : "#666",
+                fontSize: "11px",
+                padding: "1px 7px",
+              }}
+            >
+              {processorConfig ? "✓ Set" : "Not set"}
+            </span>
+          </button>
+
+          {/* Team names */}
+          <div
+            style={{ display: "flex", gap: "24px", fontSize: "14px", color: "#9ca3af" }}
+          >
+            <span>Laxminarayana Vadnala</span>
+            <span>Patrick Do</span>
+            <span>Jude Lynch</span>
+          </div>
         </div>
       </div>
-      <Group direction="horizontal" style={{ height: "100vh" }}>
+
+      <Group direction="horizontal" style={{ flex: 1, overflow: "hidden" }}>
         {/* Left panel - code editor */}
         <Panel
           defaultSize={50}
@@ -105,16 +156,12 @@ function App() {
             defaultLanguage={language}
             onLanguageChange={setLanguage}
             onCodeSubmuit={handleCodeSubmit}
+            processorConfig={processorConfig}
           />
         </Panel>
 
-        {/* Drag Handle */}
         <Separator
-          style={{
-            width: "6px",
-            backgroundColor: "#333",
-            cursor: "col-resize",
-          }}
+          style={{ width: "6px", backgroundColor: "#333", cursor: "col-resize" }}
         />
 
         {/* Right panel - pipeline grid */}
@@ -128,10 +175,29 @@ function App() {
             overflow: "auto",
           }}
         >
-          <h2 style={{ martinTop: 0 }}>Pipeline</h2>
-          <PipelineGrid data={MOCK_DATA} />
+          <h2 style={{ marginTop: 0 }}>Pipeline</h2>
+          {simLoading && (
+            <div style={{ color: "#9ca3af", fontSize: "14px" }}>
+              Compiling and simulating…
+            </div>
+          )}
+          {simError && !simLoading && (
+            <div style={{ color: "#f87171", fontSize: "13px", whiteSpace: "pre-wrap" }}>
+              {simError}
+            </div>
+          )}
+          {!simLoading && <PipelineGrid rows={pipelineRows} />}
         </Panel>
       </Group>
+
+      {/* Config modal */}
+      {showConfigModal && (
+        <ProcessorConfigModal
+          existingConfig={processorConfig}
+          onClose={() => setShowConfigModal(false)}
+          onConfirm={handleConfigConfirm}
+        />
+      )}
     </div>
   );
 }

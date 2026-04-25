@@ -17,9 +17,10 @@ export async function callApi({
   httpMethod = "GET",
   httpUrl,
   jsonData = null,
+  formData = null,
   queryParams = null,
   headers = {},
-  timeoutMs = 10000,
+  timeoutMs = 30000,
 }) {
   if (!httpUrl) {
     throw new Error("callApi: httpUrl is required");
@@ -40,17 +41,18 @@ export async function callApi({
       });
     }
 
+    const isFormData = formData instanceof FormData;
     const config = {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        ...headers,
-      },
+      headers: isFormData
+        ? { ...headers }
+        : { "Content-Type": "application/json", ...headers },
       signal: controller.signal,
     };
 
-    // Attach body for methods that allow it
-    if (jsonData && ["POST", "PUT", "DELETE"].includes(method)) {
+    if (isFormData && ["POST", "PUT", "DELETE"].includes(method)) {
+      config.body = formData;
+    } else if (jsonData && ["POST", "PUT", "DELETE"].includes(method)) {
       config.body = JSON.stringify(jsonData);
     }
 

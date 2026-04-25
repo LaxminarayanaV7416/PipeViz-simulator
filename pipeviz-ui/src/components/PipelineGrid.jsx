@@ -1,47 +1,62 @@
 const STAGE_COLORS = {
-    IF:  '#083D77', // Regal Navy
-    IS:  '#995D81', // Dusty Lavendar
-    EXE: '#DA4167', // Magneta Bloom
-    MEM: '#F4D35E', // Royal Gold
-    WB:  '#F78764' // Coral Glow
+    IF:  '#083D77',
+    IS:  '#995D81',
+    EXE: '#DA4167',
+    MEM: '#F4D35E',
+    WB:  '#F78764',
 }
 
-function getStage(ifCycle, cycle){
-    if (cycle === ifCycle)     return 'IF'
-    if (cycle === ifCycle + 1) return 'IS'
-    if (cycle === ifCycle + 2) return 'EXE'
-    if (cycle === ifCycle + 3) return 'MEM'
-    if (cycle === ifCycle + 4) return 'WB'
-
-    return ''
+const STALL_COLORS = {
+    IF:  '#041e3c',
+    IS:  '#4d2e40',
+    EXE: '#6d1f32',
+    MEM: '#7a6a2f',
+    WB:  '#7c3c2f',
 }
 
-export default function PipelineGrid({ data }) {
-    const { totalCycles, instructions } = data
+function parseCell(cell) {
+    if (!cell) return { stage: '', isStall: false }
+    const isStall = cell.includes('[STALL]')
+    const stage = cell.split('[')[0]
+    return { stage, isStall }
+}
 
-    const cycles = Array.from({ length: totalCycles }, (_, i ) => i + 1)
+export default function PipelineGrid({ rows }) {
+    if (!rows || rows.length === 0) {
+        return (
+            <div style={{ color: '#555', fontSize: '14px', marginTop: '16px' }}>
+                Run a simulation to see the pipeline diagram.
+            </div>
+        )
+    }
+
+    const cycleKeys = Object.keys(rows[0])
+        .filter(k => /^C\d+$/.test(k))
+        .sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
 
     return (
         <div style={{ overflowX: 'auto', width: '100%', maxHeight: '80vh' }}>
-            <table style={{ borderCollapse: 'seperate', borderSpacing: 0, whiteSpace: 'nowrap' }}>
+            <table style={{ borderCollapse: 'separate', borderSpacing: 0, whiteSpace: 'nowrap' }}>
                 <thead>
                     <tr>
                         <th style={headerCell}>Instruction</th>
-                        {cycles.map(c => (
-                            <th key={c} style={headerCell}>C{c}</th>
+                        {cycleKeys.map(k => (
+                            <th key={k} style={headerCell}>{k}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody>
-                    {instructions.map((instr) => (
-                        <tr key={instr.label}>
-                            <td style={labelCell}>{instr.label}</td>
-                            {cycles.map(c => {
-                                const stage = getStage(instr.ifCycle, c)
-
+                    {rows.map((row, i) => (
+                        <tr key={i}>
+                            <td style={labelCell}>{row.instruction}</td>
+                            {cycleKeys.map(k => {
+                                const { stage, isStall } = parseCell(row[k])
                                 return (
-                                    <td key={c} style={stageCell(stage)}>
-                                        {stage}
+                                    <td key={k} style={stageCell(stage, isStall)}>
+                                        {stage || ''}
+                                        {isStall && stage
+                                            ? <span style={{ fontSize: '9px', opacity: 0.8 }}> S</span>
+                                            : null}
                                     </td>
                                 )
                             })}
@@ -76,18 +91,16 @@ const labelCell = {
     backgroundColor: '#242424',
 }
 
-function stageCell(stage) {
+function stageCell(stage, isStall) {
+    const colors = isStall ? STALL_COLORS : STAGE_COLORS
     return {
-        pardding: '6px 10px',
-
-        border: '1px solid #333',
+        padding: '6px 10px',
+        border: isStall ? '1px dashed #555' : '1px solid #333',
         textAlign: 'center',
-        fontWeight: stage? 'bold' : 'normal',
+        fontWeight: stage ? 'bold' : 'normal',
         fontSize: '12px',
-
-        backgroundColor: stage ? STAGE_COLORS[stage] : 'transparent',
-        color: stage? '#fff' : 'transparent',
-
-        minWidth: '40px',
+        backgroundColor: stage ? colors[stage] : 'transparent',
+        color: stage ? '#fff' : 'transparent',
+        minWidth: '44px',
     }
 }

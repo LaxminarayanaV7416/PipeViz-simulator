@@ -15,6 +15,7 @@ export default function CodeEditor({
   defaultCode = "",
   defaultLanguage = "c",
   onLanguageChange,
+  processorConfig = null,
 }) {
   const [language, setLanguage] = useState(defaultLanguage);
   const [code, setCode] = useState(defaultCode);
@@ -164,18 +165,28 @@ export default function CodeEditor({
         ))}
       </select>
 
-      <label style={{ marginRight: "8px", fontSize: "14px" }}>Pipeline:</label>
-      <select
-        value={selectedPipeline}
-        onChange={(e) => setSelectedPipeline(e.target.value)}
-        style={{ padding: "6px 10px", fontSize: "14px" }}
-      >
-        {pipelines.map((p) => (
-          <option key={p} value={p}>
-            {p}
-          </option>
-        ))}
-      </select>
+      {processorConfig ? (
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px" }}>
+          <span style={{ color: "#9ca3af" }}>Pipeline:</span>
+          <span style={{ backgroundColor: "#0f2d1f", border: "1px solid #10b981", borderRadius: "4px", color: "#10b981", padding: "4px 10px" }}>
+            {processorConfig.scheduling_policy}
+          </span>
+          <span style={{ color: "#555", fontSize: "12px" }}>configured ⚙</span>
+        </div>
+      ) : (
+        <>
+          <label style={{ marginRight: "8px", fontSize: "14px" }}>Pipeline:</label>
+          <select
+            value={selectedPipeline}
+            onChange={(e) => setSelectedPipeline(e.target.value)}
+            style={{ padding: "6px 10px", fontSize: "14px" }}
+          >
+            {pipelines.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </>
+      )}
       <input
         ref={fileInputRef}
         type="file"

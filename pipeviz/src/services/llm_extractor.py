@@ -164,6 +164,7 @@ def extract_from_image(image_bytes: bytes, media_type: str) -> ProcessorConfig:
                             "'X instructions need N clock cycles to complete the EX stage' and fill "
                             "execution_latencies with those values. Include a 'default' key for any "
                             "instruction types not explicitly mentioned."
+                            "If there is OOO, it is 'out of order'."
                         ),
                     },
                 ],
