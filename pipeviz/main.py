@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 
 from src.pipeline.utils import get_args
-from src.routers import pipeline_router
+from src.routers import config_router, pipeline_router
 
 
 @asynccontextmanager
@@ -38,6 +38,7 @@ app.add_middleware(
 )
 
 app.include_router(pipeline_router.router)
+app.include_router(config_router.router)
 
 if __name__ == "__main__":
     args = get_args()
