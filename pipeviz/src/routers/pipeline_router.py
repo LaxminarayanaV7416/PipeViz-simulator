@@ -11,7 +11,11 @@ from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
 from src.config import BASE_PATH
-from src.enum_vault.pipeline_enums import HazardType, PipelineStage, PipelineTypes
+from src.enum_vault.pipeline_enums import (
+    HazardType,
+    PipelineTypes,
+    StaticInOrderStages,
+)
 from src.enum_vault.workflow_enums import (
     SupportedProgrammingLanguagesEnum,
     WorkflowPaths,
@@ -82,8 +86,8 @@ async def simulate_pipelines(
     code: str = "",
     mock_exsisting_code: bool = False,
     function_name: str = "main",
-    pipeline_type: PipelineTypes = PipelineTypes.STATIC,
-    cycle_weights: dict[str, int] = {i.name.lower(): 1 for i in PipelineStage},
+    pipeline_type: PipelineTypes = PipelineTypes.STATIC_IN_ORDER,
+    cycle_weights: dict[str, int] | None = None,
 ):
     try:
         # validate the code and generate assembly code

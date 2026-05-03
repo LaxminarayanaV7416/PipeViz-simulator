@@ -1,10 +1,20 @@
 from dataclasses import dataclass
+from enum import IntEnum
 from pathlib import Path
 
 import yaml
 from pydantic import BaseModel, field_validator
 
-from src.enum_vault.pipeline_enums import HazardType, PipelineStage
+from src.enum_vault.pipeline_enums import (
+    DynamicInOrderStages,
+    HazardType,
+    InOrderSuperscalarStages,
+    OutOfOrderStages,
+    ScoreboardStages,
+    StaticInOrderStages,
+    TomasuloStages,
+    VLIWStages,
+)
 
 BASE_PATH = (Path(__file__).parent / "..").resolve()
 OPSCODE_YAML_PATH = BASE_PATH / "assembly_assets" / "aarch64_opcodes.yaml"
@@ -82,8 +92,8 @@ class Hazard:
     cycle: int
     producer_pc: int
     consumer_pc: int
-    producer_stage: PipelineStage
-    consumer_stage: PipelineStage
+    producer_stage: IntEnum
+    consumer_stage: IntEnum
     resource: str  # Register name or resource name
 
     def __repr__(self):
@@ -100,7 +110,7 @@ class PipelineState:
     """State of pipeline at a given cycle"""
 
     cycle: int
-    stages: dict[PipelineStage, int | None]  # Stage -> instruction PC
+    stages: dict[IntEnum, int | None]  # Stage -> instruction PC
     stalled: bool
     hazards: list[Hazard]
     forwarding: list[tuple[int, int, str]]  # (from_pc, to_pc, register)
@@ -113,6 +123,14 @@ class PipelineState:
             ]
         )
         return f"Cycle {self.cycle}: [{stage_str}]" + (" STALL" if self.stalled else "")
+
+
+@dataclass
+class InstructionState:
+    inst: Instruction
+    stage: int
+    remaining_latency: int = 0
+    done: bool = False
 
 
 if __name__ == "__main__":

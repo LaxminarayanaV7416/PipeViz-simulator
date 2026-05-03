@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum, IntEnum, StrEnum
+from types import DynamicClassAttribute
 
 
 class PipelineTypes(StrEnum):
@@ -20,14 +21,6 @@ class HazardType(StrEnum):
     STRUCTURAL = "Structural"  # Resource conflict
 
 
-class PipelineStage(Enum):
-    FETCH = 0
-    DECODE = 1
-    EXECUTE = 2
-    MEMORY = 3
-    WRITEBACK = 4
-
-
 class StaticInOrderStages(IntEnum):
     IF = 0
     ID = 1
@@ -45,7 +38,7 @@ class StaticInOrderStages(IntEnum):
 
     @classmethod
     def get_war_hazard_prone_stages(cls) -> list[StaticInOrderStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_waw_hazard_prone_stages(cls) -> list[StaticInOrderStages]:
@@ -54,6 +47,18 @@ class StaticInOrderStages(IntEnum):
     @classmethod
     def get_final_stage(cls) -> StaticInOrderStages:
         return cls.WB
+
+    @classmethod
+    def get_all_stages(cls, names=False) -> list[StaticInOrderStages] | list[str]:
+        result = list(cls)
+        if names:
+            return [s.name for s in result]
+        return result
+
+    @classmethod
+    def get_stage_by_name(cls, name: StaticInOrderStages) -> str:
+        return str(name)
+
 
 class ScoreboardStages(IntEnum):
     IF = 0
@@ -82,6 +87,17 @@ class ScoreboardStages(IntEnum):
     def get_final_stage(cls) -> ScoreboardStages:
         return cls.WB
 
+    @classmethod
+    def get_all_stages(cls, names=False) -> list[ScoreboardStages] | list[str]:
+        result = list(cls)
+        if names:
+            return [s.name for s in result]
+        return result
+
+    @classmethod
+    def get_stage_by_name(cls, name: ScoreboardStages) -> str:
+        return str(name)
+
 
 class DynamicInOrderStages(IntEnum):
     IF = 0
@@ -108,8 +124,19 @@ class DynamicInOrderStages(IntEnum):
         return [cls.IS]
 
     @classmethod
-    def get_final_stage(cls) -> DynamicInOrderStages
+    def get_final_stage(cls) -> DynamicInOrderStages:
         return cls.WB
+
+    @classmethod
+    def get_all_stages(cls, names=False) -> list[DynamicInOrderStages] | list[str]:
+        result = list(cls)
+        if names:
+            return [s.name for s in result]
+        return result
+
+    @classmethod
+    def get_stage_by_name(cls, name: DynamicInOrderStages) -> str:
+        return str(name)
 
 
 class InOrderSuperscalarStages(IntEnum):
@@ -131,7 +158,7 @@ class InOrderSuperscalarStages(IntEnum):
 
     @classmethod
     def get_war_hazard_prone_stages(cls) -> list[InOrderSuperscalarStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_waw_hazard_prone_stages(cls) -> list[InOrderSuperscalarStages]:
@@ -140,6 +167,17 @@ class InOrderSuperscalarStages(IntEnum):
     @classmethod
     def get_final_stage(cls) -> InOrderSuperscalarStages:
         return cls.COM
+
+    @classmethod
+    def get_all_stages(cls, names=False) -> list[InOrderSuperscalarStages] | list[str]:
+        result = list(cls)
+        if names:
+            return [s.name for s in result]
+        return result
+
+    @classmethod
+    def get_stage_by_name(cls, name: InOrderSuperscalarStages) -> str:
+        return str(name)
 
 
 class VLIWStages(IntEnum):
@@ -159,19 +197,30 @@ class VLIWStages(IntEnum):
 
     @classmethod
     def get_raw_hazard_prone_stages(cls) -> list[VLIWStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_war_hazard_prone_stages(cls) -> list[VLIWStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_waw_hazard_prone_stages(cls) -> list[VLIWStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_final_stage(cls) -> VLIWStages:
         return cls.WB
+
+    @classmethod
+    def get_all_stages(cls, names=False) -> list[VLIWStages] | list[str]:
+        result = list(cls)
+        if names:
+            return [s.name for s in result]
+        return result
+
+    @classmethod
+    def get_stage_by_name(cls, name: VLIWStages) -> str:
+        return str(name)
 
 
 class TomasuloStages(IntEnum):
@@ -202,15 +251,26 @@ class TomasuloStages(IntEnum):
 
     @classmethod
     def get_war_hazard_prone_stages(cls) -> list[TomasuloStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_waw_hazard_prone_stages(cls) -> list[TomasuloStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_final_stage(cls) -> TomasuloStages:
         return cls.COM
+
+    @classmethod
+    def get_all_stages(cls, names=False) -> list[TomasuloStages] | list[str]:
+        result = list(cls)
+        if names:
+            return [s.name for s in result]
+        return result
+
+    @classmethod
+    def get_stage_by_name(cls, name: TomasuloStages) -> str:
+        return str(name)
 
 
 class OutOfOrderStages(IntEnum):
@@ -227,16 +287,27 @@ class OutOfOrderStages(IntEnum):
 
     @classmethod
     def get_raw_hazard_prone_stages(cls) -> list[OutOfOrderStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_war_hazard_prone_stages(cls) -> list[OutOfOrderStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_waw_hazard_prone_stages(cls) -> list[OutOfOrderStages]:
-        return []
+        return [cls.get_final_stage()]  # returns empty list
 
     @classmethod
     def get_final_stage(cls) -> OutOfOrderStages:
         return cls.COM
+
+    @classmethod
+    def get_all_stages(cls, names=False) -> list[OutOfOrderStages] | list[str]:
+        result = list(cls)
+        if names:
+            return [s.name for s in result]
+        return result
+
+    @classmethod
+    def get_stage_by_name(cls, name: OutOfOrderStages) -> str:
+        return str(name)
