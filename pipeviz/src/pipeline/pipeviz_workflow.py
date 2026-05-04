@@ -7,6 +7,7 @@ from loguru import logger
 
 from src.config import BASE_PATH
 from src.enum_vault.workflow_enums import (
+    CompilerOptimizationsEnum,
     DockerFileNamesEnum,
     RunnableCommands,
     SupportedProgrammingLanguagesEnum,
@@ -86,6 +87,8 @@ class PipeVizWorkflow:
     def generate_asembly_code(
         self,
         code_path: Path,
+        compiler_optimization: CompilerOptimizationsEnum,
+        enable_loop_unrolling: bool,
     ) -> tuple[bool, list[str] | Path]:
         asm_path = self.run_path / "main.asm"
         program_file_name = code_path.name
@@ -110,6 +113,8 @@ class PipeVizWorkflow:
             str(self._id),
             self.run_path / docker_file_name.value,
             program_file_name,
+            compiler_optimization,
+            enable_loop_unrolling,
         )
         executed, response = self.execute_command(docker_build_command)
         if not executed:
@@ -139,4 +144,3 @@ class PipeVizWorkflow:
             return False, response
 
         return True, asm_path
-

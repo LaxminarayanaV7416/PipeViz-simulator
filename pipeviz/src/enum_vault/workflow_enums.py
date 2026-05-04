@@ -1,4 +1,4 @@
-from enum import StrEnum
+from enum import IntEnum, StrEnum
 from pathlib import Path
 
 
@@ -17,9 +17,21 @@ class DockerFileNamesEnum(StrEnum):
     CPP = "cpp.dockerfile"
 
 
+class CompilerOptimizationsEnum(IntEnum):
+    LEVEL_0 = 0
+    LEVEL_1 = 1
+    LEVEL_2 = 2
+    LEVEL_3 = 3
+
+
 class RunnableCommands:
     def docker_build(
-        self, image_tag: str, file_name: Path, program_file_name: str
+        self,
+        image_tag: str,
+        file_name: Path,
+        program_file_name: str,
+        compiler_optimization: CompilerOptimizationsEnum,
+        enable_loop_unrolling: bool,
     ) -> list[str]:
         return [
             "docker",
@@ -31,6 +43,10 @@ class RunnableCommands:
             image_tag,
             "--build-arg",
             f"PROGRAM_FILE_NAME={program_file_name}",
+            "--build-arg",
+            f"COMPILER_OPTIMIZATION=-O{compiler_optimization.value}",
+            "--build-arg",
+            f"ENABLE_LOOP_UNROLLING={int(enable_loop_unrolling)}",
             str(file_name.parent),
         ]
 

@@ -14,9 +14,9 @@ from src.config import BASE_PATH
 from src.enum_vault.pipeline_enums import (
     HazardType,
     PipelineTypes,
-    StaticInOrderStages,
 )
 from src.enum_vault.workflow_enums import (
+    CompilerOptimizationsEnum,
     SupportedProgrammingLanguagesEnum,
     WorkflowPaths,
 )
@@ -68,10 +68,8 @@ async def get_mock_code(language: SupportedProgrammingLanguagesEnum):
         paths = WorkflowPaths(BASE_PATH)
         if language == SupportedProgrammingLanguagesEnum.C:
             code_path = paths.c_mock_path
-        elif language == SupportedProgrammingLanguagesEnum.CPP:
-            code_path = paths.cpp_mock_path
         else:
-            code_path = paths.rust_mock_path
+            code_path = paths.cpp_mock_path
 
         with code_path.open("r") as f:
             code = f.readlines()
@@ -87,25 +85,24 @@ async def simulate_pipelines(
     mock_exsisting_code: bool = False,
     function_name: str = "main",
     pipeline_type: PipelineTypes = PipelineTypes.STATIC_IN_ORDER,
-    cycle_weights: dict[str, int] | None = None,
+    compiler_optimization: CompilerOptimizationsEnum = CompilerOptimizationsEnum.LEVEL_0,
+    enable_loop_unrolling: bool = False,
 ):
     try:
         # validate the code and generate assembly code
         workflow = PipeVizWorkflow(language)
 
         if mock_exsisting_code:
-            if language == SupportedProgrammingLanguagesEnum.RUST:
-                code_path = workflow._paths.rust_mock_path
-            elif language == SupportedProgrammingLanguagesEnum.C:
+            if language == SupportedProgrammingLanguagesEnum.C:
                 code_path = workflow._paths.c_mock_path
             elif language == SupportedProgrammingLanguagesEnum.CPP:
                 code_path = workflow._paths.cpp_mock_path
-            result, asm_path = workflow.generate_asembly_code(code_path)
+            result, asm_path = workflow.generate_asembly_code(
+                code_path, compiler_optimization, enable_loop_unrolling
+            )
         else:
             # we are not running mock code, so we use the provided code
-            if language == SupportedProgrammingLanguagesEnum.RUST:
-                code_path = workflow.run_path / "main.rs"
-            elif language == SupportedProgrammingLanguagesEnum.C:
+            if language == SupportedProgrammingLanguagesEnum.C:
                 code_path = workflow.run_path / "main.c"
             elif language == SupportedProgrammingLanguagesEnum.CPP:
                 code_path = workflow.run_path / "main.cpp"
@@ -120,7 +117,9 @@ async def simulate_pipelines(
             with open(code_path, "w") as f:
                 f.write(code)
 
-            result, asm_path = workflow.generate_asembly_code(code_path)
+            result, asm_path = workflow.generate_asembly_code(
+                code_path, compiler_optimization, enable_loop_unrolling
+            )
 
         if not result and not isinstance(asm_path, Path):
             raise HTTPException(
@@ -146,7 +145,9 @@ async def simulate_pipelines(
         # Simulate with forwarding
         logger.info("SIMULATION WITH FORWARDING")
         logger.info("=" * 100)
-        sim_forward = PipelineSimulator(pipeline_type=pipeline_type, enable_forwarding=True)
+        sim_forward = PipelineSimulator(
+            pipeline_type=pipeline_type, enable_forwarding=True
+        )
         sim_forward.load_instructions(function_lines)
         sim_forward.simulate()
         sim_forward.print_simulation()
