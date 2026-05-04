@@ -53,7 +53,7 @@ def ask_llm(workflow_id: str, question: str) -> str:
     prompt = generate_prompt(chat_config)
     resp = client.chat.completions.create(
         model=MODEL_NAME,
-        messages=prompt,
+        messages=[{"role": "user", "content": prompt}],
     )
     llm_response = resp.choices[0].message.content
     logger.info(llm_response)
