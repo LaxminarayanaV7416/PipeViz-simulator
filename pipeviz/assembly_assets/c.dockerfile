@@ -17,7 +17,7 @@ COPY "${PROGRAM_FILE_NAME}" main.c
 
 # compile the rust code with debug info
 RUN if [ "${ENABLE_LOOP_UNROLLING}" = "1" ]; then \
-        gcc -g ${COMPILER_OPTIMIZATION} -floop-unroll-all -o main main.c; \
+        gcc -g ${COMPILER_OPTIMIZATION} -funroll-loops -o main main.c; \
     else \
         gcc -g ${COMPILER_OPTIMIZATION} -o main main.c; \
     fi

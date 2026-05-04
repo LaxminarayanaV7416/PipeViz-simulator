@@ -5,15 +5,24 @@ Authors:
     - Laxminarayana Vadnala <lvadnala@nd.edu>
 """
 
+from ast import In
 from pathlib import Path
+from types import DynamicClassAttribute
 
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
 from src.config import BASE_PATH
 from src.enum_vault.pipeline_enums import (
+    DynamicInOrderStages,
     HazardType,
+    InOrderSuperscalarStages,
+    OutOfOrderStages,
     PipelineTypes,
+    ScoreboardStages,
+    StaticInOrderStages,
+    TomasuloStages,
+    VLIWStages,
 )
 from src.enum_vault.workflow_enums import (
     CompilerOptimizationsEnum,
@@ -74,6 +83,41 @@ async def get_mock_code(language: SupportedProgrammingLanguagesEnum):
         with code_path.open("r") as f:
             code = f.readlines()
         return {"code": code}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/get_pipeline_details")
+async def get_pipeline_details(pipeline_type: PipelineTypes):
+    try:
+        if pipeline_type == PipelineTypes.STATIC_IN_ORDER:
+            stages = StaticInOrderStages
+        elif pipeline_type == PipelineTypes.SCOREBOARD:
+            stages = ScoreboardStages
+        elif pipeline_type == PipelineTypes.DYNAMIC_IN_ORDER:
+            stages = DynamicClassAttribute
+        elif pipeline_type == PipelineTypes.IN_ORDER_SUPERSCALAR:
+            stages = InOrderSuperscalarStages
+        elif pipeline_type == PipelineTypes.VLIW:
+            stages = VLIWStages
+        elif pipeline_type == PipelineTypes.TOMASULO:
+            stages = TomasuloStages
+        elif pipeline_type == PipelineTypes.OUT_OF_ORDER:
+            stages = OutOfOrderStages
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid pipeline type"
+            )
+
+        return {
+            "stages": [stages(stage).name for stage in stages.get_all_stages()],
+            "structural_hazard_prone_stages": [stages(stage).name for stage in stages.get_structural_hazard_prone_stages()],
+            "raw_hazard_prone_stages": [stages(stage).name for stage in stages.get_raw_hazard_prone_stages()],
+            "war_hazard_prone_stages": [stages(stage).name for stage in stages.get_war_hazard_prone_stages()],
+            "waw_hazard_prone_stages": [stages(stage).name for stage in stages.get_waw_hazard_prone_stages()],
+            "final_stage": stages(stages.get_final_stage()).name,
+        }
+
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -153,7 +197,7 @@ async def simulate_pipelines(
         sim_forward.print_simulation()
         json_data = sim_forward.convert_to_json()
 
-        workflow.clean()
+        # workflow.clean()
 
         return {"pipelines": json_data}
     except Exception as e:

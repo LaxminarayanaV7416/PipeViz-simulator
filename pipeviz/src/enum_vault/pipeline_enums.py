@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum, IntEnum, StrEnum
-from types import DynamicClassAttribute
+from enum import IntEnum, StrEnum
 
 
 class PipelineTypes(StrEnum):
