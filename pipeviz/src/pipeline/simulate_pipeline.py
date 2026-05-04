@@ -10,6 +10,7 @@ Analyzes ARM64 assembly code and detects:
 from __future__ import annotations
 
 from loguru import logger
+from pydantic.networks import MariaDBDsn
 
 from src.config import Hazard, Instruction, InstructionState, PipelineState
 from src.enum_vault.pipeline_enums import (
@@ -294,6 +295,7 @@ class PipelineSimulator:
                 )
             )
             self.hazards_detected.extend(hazards_this_cycle)
+            self.cycles = cycle
 
     def simulate(self) -> list[PipelineState]:
         """Run pipeline simulation"""
@@ -334,6 +336,35 @@ class PipelineSimulator:
 
                 last_stage_by_pc[pc] = stage_name
 
+        return rows
+
+    def convert_to_markdown(self, json_data: list[dict]) -> list[str]:
+        rows = []
+
+        # first figure out how many columns we need
+        num_columns = self.cycles + 1  # +1 for the instuction
+        logger.info(f"num_columns: {num_columns}")
+
+        # header row
+        markdown = "| Instruction | "
+        markdown_2 = "| --- |"
+        for cycle in range(self.cycles):
+            markdown += f"C{cycle} |"
+            markdown_2 += " --- |"
+        rows.append(markdown)
+        rows.append(markdown_2)
+
+        for data in json_data:
+            instruction = data["instruction"]
+            markdown = f"|{instruction}|"
+
+            for cycle in range(self.cycles):
+                key = f"C{cycle}"
+                if key in data.keys():
+                    markdown += f" {data[key]} |"
+                else:
+                    markdown += "  |"
+            rows.append(markdown)
         return rows
 
     def print_simulation(self):

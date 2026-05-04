@@ -9,8 +9,10 @@ from below source code the assembly code is generated for function `{{ function_
 {% if loop_unrolling_factor %}
 with loop unrolling factor flag `-funroll-loops` during compilation
 {% endif %}
-```
-{{ source_code }}
+```{{ programming_language }}
+{% for line in source_code %}
+{{ line }}
+{% endfor %}
 ```
 
 # Generated Assembly code in AARCH64 (ARM64)

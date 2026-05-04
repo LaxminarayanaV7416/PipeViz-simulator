@@ -7,6 +7,8 @@ Authors:
 
 import json
 from pathlib import Path
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
@@ -33,7 +35,11 @@ from src.models.pipeline_router_models import (
 )
 from src.pipeline.pipeviz_workflow import PipeVizWorkflow
 from src.pipeline.simulate_pipeline import PipelineSimulator
-from src.pipeline.utils import extract_function_assembly
+from src.pipeline.utils import (
+    extract_function_assembly,
+    read_json_data,
+    update_chat_required_data,
+)
 
 router = APIRouter(tags=["Pipeline Routes"], prefix="/api")
 
@@ -194,24 +200,22 @@ async def simulate_pipelines(
         chat_config_path: Path = workflow.get_chat_config_file()
 
         with code_path.open("r") as f:
-            source_code = f.read()
+            source_code = f.readlines()
 
+        pipe_line_details = await get_pipeline_details(pipeline_type)
 
-        json_data = {
-            "programming_language" : language.value,
-            "function_name" : function_name,
-            "compiler_flag" : compiler_optimization.value,
-            "loop_unrolling_factor" : enable_loop_unrolling,
-            "source_code" : source_code,
-            "assembly_code" :
-
-            "pipeline_type" : pipeline_type,
-            "compiler_optimization" : compiler_optimization,
-            "enable_loop_unrolling" : enable_loop_unrolling,
+        chat_required_data = {
+            "programming_language": language.value,
+            "function_name": function_name,
+            "compiler_flag": compiler_optimization.value,
+            "loop_unrolling_factor": enable_loop_unrolling,
+            "source_code": source_code,
+            "assembly_code": function_lines,
+            "pipeline_type": pipeline_type.value,
+            "pipeline_stages": pipe_line_details.get("stages"),
         }
 
-        with chat_config_path.open("w") as f:
-            json.dump(json_data, f, indent=4)
+        update_chat_required_data(chat_config_path, chat_required_data)
 
         logger.info("Analyzing Fibonacci function...")
 
@@ -223,10 +227,12 @@ async def simulate_pipelines(
         )
         sim_forward.load_instructions(function_lines)
         sim_forward.simulate()
-        sim_forward.print_simulation()
         json_data = sim_forward.convert_to_json()
 
-        # workflow.clean()
+        markdown_data = sim_forward.convert_to_markdown(json_data)
+
+        chat_required_data["generated_pipeline_simulation"] = markdown_data
+        update_chat_required_data(chat_config_path, chat_required_data)
 
         return {"workflow_id": workflow.workflow_id, "pipelines": json_data}
     except Exception as e:

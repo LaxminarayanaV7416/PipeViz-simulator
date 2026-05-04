@@ -1,5 +1,7 @@
+import json
 import re
 from argparse import ArgumentParser
+from pathlib import Path
 
 
 def get_args():
@@ -61,6 +63,25 @@ def extract_function_assembly(asm_text: str, func_name: str) -> list[str]:
 
     # Strip any trailing empty lines from the extracted block
     return captured_lines
+
+
+def update_chat_required_data(path: Path, new_data: dict) -> bool:
+    try:
+        with path.open("w") as f:
+            json.dump(new_data, f)
+        return True
+    except Exception as e:
+        print(f"Failed to update chat required data: {e}")
+        return False
+
+
+def read_json_data(path: Path) -> dict:
+    try:
+        with path.open("r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Failed to read JSON data: {e}")
+        return {}
 
 
 # ==========================================
