@@ -146,7 +146,7 @@ async def simulate_pipelines(
         # Simulate with forwarding
         logger.info("SIMULATION WITH FORWARDING")
         logger.info("=" * 100)
-        sim_forward = PipelineSimulator(enable_forwarding=True)
+        sim_forward = PipelineSimulator(pipeline_type=pipeline_type, enable_forwarding=True)
         sim_forward.load_instructions(function_lines)
         sim_forward.simulate()
         sim_forward.print_simulation()

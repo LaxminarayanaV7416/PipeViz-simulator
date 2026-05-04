@@ -89,10 +89,7 @@ class PipeVizWorkflow:
     ) -> tuple[bool, list[str] | Path]:
         asm_path = self.run_path / "main.asm"
         program_file_name = code_path.name
-        if self._programming_language == SupportedProgrammingLanguagesEnum.RUST:
-            src_path = self._paths.rust_docker_file
-            docker_file_name = DockerFileNamesEnum.RUST
-        elif self._programming_language == SupportedProgrammingLanguagesEnum.C:
+        if self._programming_language == SupportedProgrammingLanguagesEnum.C:
             src_path = self._paths.c_docker_file
             docker_file_name = DockerFileNamesEnum.C
         else:
@@ -143,8 +140,3 @@ class PipeVizWorkflow:
 
         return True, asm_path
 
-
-if __name__ == "__main__":
-    workflow = PipeVizWorkflow(SupportedProgrammingLanguagesEnum.RUST)
-    result = workflow.generate_asembly_code(workflow._paths.rust_mock_path)
-    logger.info(result)

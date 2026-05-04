@@ -56,7 +56,7 @@ class StaticInOrderStages(IntEnum):
         return result
 
     @classmethod
-    def get_stage_by_name(cls, name: StaticInOrderStages) -> str:
+    def get_stage_by_name(cls, name: IntEnum) -> str:
         return str(name)
 
 
@@ -95,7 +95,7 @@ class ScoreboardStages(IntEnum):
         return result
 
     @classmethod
-    def get_stage_by_name(cls, name: ScoreboardStages) -> str:
+    def get_stage_by_name(cls, name: IntEnum) -> str:
         return str(name)
 
 
@@ -135,7 +135,7 @@ class DynamicInOrderStages(IntEnum):
         return result
 
     @classmethod
-    def get_stage_by_name(cls, name: DynamicInOrderStages) -> str:
+    def get_stage_by_name(cls, name: IntEnum) -> str:
         return str(name)
 
 
@@ -176,7 +176,7 @@ class InOrderSuperscalarStages(IntEnum):
         return result
 
     @classmethod
-    def get_stage_by_name(cls, name: InOrderSuperscalarStages) -> str:
+    def get_stage_by_name(cls, name: IntEnum) -> str:
         return str(name)
 
 
@@ -219,7 +219,7 @@ class VLIWStages(IntEnum):
         return result
 
     @classmethod
-    def get_stage_by_name(cls, name: VLIWStages) -> str:
+    def get_stage_by_name(cls, name: IntEnum) -> str:
         return str(name)
 
 
@@ -269,7 +269,7 @@ class TomasuloStages(IntEnum):
         return result
 
     @classmethod
-    def get_stage_by_name(cls, name: TomasuloStages) -> str:
+    def get_stage_by_name(cls, name: IntEnum) -> str:
         return str(name)
 
 
@@ -309,5 +309,5 @@ class OutOfOrderStages(IntEnum):
         return result
 
     @classmethod
-    def get_stage_by_name(cls, name: OutOfOrderStages) -> str:
+    def get_stage_by_name(cls, name: IntEnum) -> str:
         return str(name)

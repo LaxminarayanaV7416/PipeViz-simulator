@@ -3,19 +3,16 @@ from pathlib import Path
 
 
 class SupportedProgrammingLanguagesEnum(StrEnum):
-    RUST = "rust"
     C = "c"
     CPP = "cpp"
 
 
 class SupportedFileExtensionsEnum(StrEnum):
-    RUST = "rs"
     CPP = "cpp"
     C = "c"
 
 
 class DockerFileNamesEnum(StrEnum):
-    RUST = "rust.dockerfile"
     C = "c.dockerfile"
     CPP = "cpp.dockerfile"
 
@@ -47,9 +44,7 @@ class RunnableCommands:
         destination_path: Path | str,
     ) -> list[str]:
         result = None
-        if programming_language == SupportedProgrammingLanguagesEnum.RUST:
-            result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
-        elif programming_language == SupportedProgrammingLanguagesEnum.C:
+        if programming_language == SupportedProgrammingLanguagesEnum.C:
             result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
         elif programming_language == SupportedProgrammingLanguagesEnum.CPP:
             result = ["docker", "cp", f"{container_id}:/app/main.asm", destination_path]
@@ -81,9 +76,9 @@ class WorkflowPaths:
             path.mkdir(parents=True, exist_ok=True)
         return path
 
-    @property
-    def rust_docker_file(self) -> Path:
-        return self.assembly_assets / "rust.dockerfile"
+    # @property
+    # def rust_docker_file(self) -> Path:
+    #     return self.assembly_assets / "rust.dockerfile"
 
     @property
     def c_docker_file(self) -> Path:
@@ -93,9 +88,9 @@ class WorkflowPaths:
     def cpp_docker_file(self) -> Path:
         return self.assembly_assets / "cpp.dockerfile"
 
-    @property
-    def rust_mock_path(self) -> Path:
-        return self.mock_path / "test-fib.rs"
+    # @property
+    # def rust_mock_path(self) -> Path:
+    #     return self.mock_path / "test-fib.rs"
 
     @property
     def cpp_mock_path(self) -> Path:

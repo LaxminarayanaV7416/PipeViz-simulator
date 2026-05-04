@@ -34,21 +34,12 @@ class PipelineSimulator:
         self,
         pipeline_type: PipelineTypes = PipelineTypes.STATIC_IN_ORDER,
         enable_forwarding: bool = True,
-        branch_policy: str = "not_taken",
-        branch_penalty: int = 1,
     ):
         self.pipeline_type = pipeline_type
         self.enable_forwarding = enable_forwarding
-        self.branch_policy = branch_policy  # "not_taken" or "always_taken"
-        self.branch_penalty = branch_penalty
         self.instructions: list[Instruction] = []
         self.pipeline_states: list[PipelineState] = []
         self.hazards_detected: list[Hazard] = []
-
-        # Pipeline configuration
-        self.num_stages = 5
-        self.memory_units = 1
-        self.alu_units = 1
 
         if pipeline_type == PipelineTypes.STATIC_IN_ORDER:
             self.stages = StaticInOrderStages
@@ -116,57 +107,22 @@ class PipelineSimulator:
         return True
 
     def construct_simulation_loop(self) -> list[InstructionState]:
-
         pc: int = 0
         cycle: int = 0
-        self.inflight_instructions: list[InstructionState] = []
-        self.program: list[Instruction] = []
-        final_stage = self.stages.get_final_stage()
-
-        while pc < len(self.program) or self.inflight_instructions:
-            cycle += 1
-
-            # 1. Remove completed instructions
-            self.inflight_instructions = [
-                s
-                for s in self.inflight_instructions
-                if not (s.stage == final_stage and s.done)
-            ]
-
-            # 2. Advance existing instructions
-            for state in self.inflight_instructions:
-                self.advance_instruction(state)
-
-            # 3. Fetch new instruction (if possible)
-            if self.can_fetch(self.inflight_instructions):
-                inst = self.program[pc]
-                self.inflight_instructions.append(InstructionState(inst=inst, stage=0))
-                pc += 1
-
-        return self.inflight_instructions
-
-    def simulate(self) -> list[PipelineState]:
-        """Run pipeline simulation"""
-        self.pipeline_states = []
-        self.hazards_detected = []
-
-        if not self.instructions:
-            return self.pipeline_states
+        self.program = self.instructions[:]
 
         stage_order = sorted(self.stages.get_all_stages(), key=lambda s: s.value)
         stage_count = len(stage_order)
         final_stage = self.stages.get_final_stage()
 
         pipeline_slots: list[InstructionState | None] = [None] * stage_count
-        pc = 0
-        cycle = 0
 
         hazard_detector = HazardDetector(self.instructions, self.pipeline_type)
         raw_prone = set(self.stages.get_raw_hazard_prone_stages())
         war_prone = set(self.stages.get_war_hazard_prone_stages())
         waw_prone = set(self.stages.get_waw_hazard_prone_stages())
 
-        while pc < len(self.instructions) or any(pipeline_slots):
+        while pc < len(self.program) or any(pipeline_slots):
             cycle += 1
             hazards_this_cycle: list[Hazard] = []
             stall_stage_index: int | None = None
@@ -314,11 +270,9 @@ class PipelineSimulator:
                     pipeline_slots[idx + 1] = state
                     state.stage = idx + 1
 
-            if stall_stage_index is None and pc < len(self.instructions):
+            if stall_stage_index is None and pc < len(self.program):
                 if pipeline_slots[0] is None:
-                    pipeline_slots[0] = InstructionState(
-                        inst=self.instructions[pc], stage=0
-                    )
+                    pipeline_slots[0] = InstructionState(inst=self.program[pc], stage=0)
                     pc += 1
 
             stages_snapshot = {
@@ -341,6 +295,15 @@ class PipelineSimulator:
             )
             self.hazards_detected.extend(hazards_this_cycle)
 
+    def simulate(self) -> list[PipelineState]:
+        """Run pipeline simulation"""
+        self.pipeline_states = []
+        self.hazards_detected = []
+
+        if not self.instructions:
+            return self.pipeline_states
+
+        self.construct_simulation_loop()
         return self.pipeline_states
 
     def convert_to_json(self):
@@ -363,7 +326,7 @@ class PipelineSimulator:
                 if pc is None:
                     continue
 
-                stage_name = display_stage(stage)
+                stage_name = stage.name
                 if last_stage_by_pc.get(pc) == stage_name:
                     rows[pc][cycle_key] = f"{stage_name}[STALL]"
                 else:
@@ -391,7 +354,7 @@ class PipelineSimulator:
                 else:
                     instr = self.instructions[pc]
                     cell = f"{pc}:{instr.opcode}"
-                stage_cells.append(f"{display_stage(stage)}={cell}")
+                stage_cells.append(f"{self.stages.get_stage_by_name(stage)}={cell}")
 
             stall_marker = " STALL" if state.stalled else ""
             logger.info(f"C{state.cycle}: " + " | ".join(stage_cells) + stall_marker)
@@ -402,98 +365,3 @@ class PipelineSimulator:
 
         if self.hazards_detected:
             logger.info(f"Detected hazards: {len(self.hazards_detected)}")
-
-    # def _detect_data_hazards(self, instr: Instruction, pipeline: dict) -> list[Hazard]:
-    #     """Detect RAW, WAR, WAW data hazards"""
-    #     hazards = []
-
-    #     # Check instructions in later stages
-    #     for stage in [
-    #         PipelineStage.EXECUTE,
-    #         PipelineStage.MEMORY,
-    #         PipelineStage.WRITEBACK,
-    #     ]:
-    #         if pipeline[stage] is None:
-    #             continue
-
-    #         other_pc = pipeline[stage]
-    #         other_instr = self.instructions[other_pc]
-
-    #         # RAW: Read After Write (True Dependency)
-    #         # Current instruction reads a register that a previous instruction writes
-    #         for src_reg in instr.src_regs:
-    #             if src_reg in other_instr.dest_regs:
-    #                 hazards.append(
-    #                     Hazard(
-    #                         type=HazardType.RAW,
-    #                         cycle=len(self.pipeline_states),
-    #                         producer_pc=other_pc,
-    #                         consumer_pc=instr.pc,
-    #                         producer_stage=stage,
-    #                         consumer_stage=PipelineStage.DECODE,
-    #                         resource=src_reg,
-    #                     )
-    #                 )
-
-    #         # WAR: Write After Read (Anti-Dependency)
-    #         # Current instruction writes a register that a previous instruction reads
-    #         for dest_reg in instr.dest_regs:
-    #             if dest_reg in other_instr.src_regs:
-    #                 hazards.append(
-    #                     Hazard(
-    #                         type=HazardType.WAR,
-    #                         cycle=len(self.pipeline_states),
-    #                         producer_pc=other_pc,
-    #                         consumer_pc=instr.pc,
-    #                         producer_stage=stage,
-    #                         consumer_stage=PipelineStage.DECODE,
-    #                         resource=dest_reg,
-    #                     )
-    #                 )
-
-    #         # WAW: Write After Write (Output Dependency)
-    #         # Current instruction writes a register that a previous instruction writes
-    #         for dest_reg in instr.dest_regs:
-    #             if dest_reg in other_instr.dest_regs:
-    #                 hazards.append(
-    #                     Hazard(
-    #                         type=HazardType.WAW,
-    #                         cycle=len(self.pipeline_states),
-    #                         producer_pc=other_pc,
-    #                         consumer_pc=instr.pc,
-    #                         producer_stage=stage,
-    #                         consumer_stage=PipelineStage.DECODE,
-    #                         resource=dest_reg,
-    #                     )
-    #                 )
-
-    #     return hazards
-
-    # def _detect_structural_hazards(self, pipeline: dict) -> list[Hazard]:
-    #     """Detect structural hazards (resource conflicts)"""
-    #     hazards = []
-
-    #     # Count memory accesses in Memory stage
-    #     memory_accesses = []
-    #     if pipeline[PipelineStage.MEMORY] is not None:
-    #         pc = pipeline[PipelineStage.MEMORY]
-    #         instr = self.instructions[pc]
-    #         if instr.memory_access:
-    #             memory_accesses.append(pc)
-
-    #     # Check if we have more memory accesses than available units
-    #     if len(memory_accesses) > self.memory_units:
-    #         for pc in memory_accesses[self.memory_units :]:
-    #             hazards.append(
-    #                 Hazard(
-    #                     type=HazardType.STRUCTURAL,
-    #                     cycle=len(self.pipeline_states),
-    #                     producer_pc=memory_accesses[0],
-    #                     consumer_pc=pc,
-    #                     producer_stage=PipelineStage.MEMORY,
-    #                     consumer_stage=PipelineStage.MEMORY,
-    #                     resource="Memory Unit",
-    #                 )
-    #             )
-
-    #     return hazards
