@@ -5,14 +5,11 @@ Authors:
     - Laxminarayana Vadnala <lvadnala@nd.edu>
 """
 
-from ast import In
+import json
 from pathlib import Path
-from types import DynamicClassAttribute
-
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
-from src.config import BASE_PATH
 from src.enum_vault.pipeline_enums import (
     DynamicInOrderStages,
     HazardType,
@@ -74,7 +71,7 @@ async def get_supported_data_hazards():
 @router.get("/get_mock_code")
 async def get_mock_code(language: SupportedProgrammingLanguagesEnum):
     try:
-        paths = WorkflowPaths(BASE_PATH)
+        paths = WorkflowPaths()
         if language == SupportedProgrammingLanguagesEnum.C:
             code_path = paths.c_mock_path
         else:
@@ -95,7 +92,7 @@ async def get_pipeline_details(pipeline_type: PipelineTypes):
         elif pipeline_type == PipelineTypes.SCOREBOARD:
             stages = ScoreboardStages
         elif pipeline_type == PipelineTypes.DYNAMIC_IN_ORDER:
-            stages = DynamicClassAttribute
+            stages = DynamicInOrderStages
         elif pipeline_type == PipelineTypes.IN_ORDER_SUPERSCALAR:
             stages = InOrderSuperscalarStages
         elif pipeline_type == PipelineTypes.VLIW:
@@ -111,10 +108,19 @@ async def get_pipeline_details(pipeline_type: PipelineTypes):
 
         return {
             "stages": [stages(stage).name for stage in stages.get_all_stages()],
-            "structural_hazard_prone_stages": [stages(stage).name for stage in stages.get_structural_hazard_prone_stages()],
-            "raw_hazard_prone_stages": [stages(stage).name for stage in stages.get_raw_hazard_prone_stages()],
-            "war_hazard_prone_stages": [stages(stage).name for stage in stages.get_war_hazard_prone_stages()],
-            "waw_hazard_prone_stages": [stages(stage).name for stage in stages.get_waw_hazard_prone_stages()],
+            "structural_hazard_prone_stages": [
+                stages(stage).name
+                for stage in stages.get_structural_hazard_prone_stages()
+            ],
+            "raw_hazard_prone_stages": [
+                stages(stage).name for stage in stages.get_raw_hazard_prone_stages()
+            ],
+            "war_hazard_prone_stages": [
+                stages(stage).name for stage in stages.get_war_hazard_prone_stages()
+            ],
+            "waw_hazard_prone_stages": [
+                stages(stage).name for stage in stages.get_waw_hazard_prone_stages()
+            ],
             "final_stage": stages(stages.get_final_stage()).name,
         }
 
@@ -147,9 +153,9 @@ async def simulate_pipelines(
         else:
             # we are not running mock code, so we use the provided code
             if language == SupportedProgrammingLanguagesEnum.C:
-                code_path = workflow.run_path / "main.c"
+                code_path = workflow.run_path / "test-fib.c"
             elif language == SupportedProgrammingLanguagesEnum.CPP:
-                code_path = workflow.run_path / "main.cpp"
+                code_path = workflow.run_path / "test-fib.cpp"
 
             # lets write some pre checks to fail early
             if function_name not in code:  # dont lower since we expect the exact match
@@ -184,6 +190,29 @@ async def simulate_pipelines(
                 detail=f"Function '{function_name}' not found in assembly code.",
             )
 
+        logger.info("Lets save the pipeline configuration for chat purposes..")
+        chat_config_path: Path = workflow.get_chat_config_file()
+
+        with code_path.open("r") as f:
+            source_code = f.read()
+
+
+        json_data = {
+            "programming_language" : language.value,
+            "function_name" : function_name,
+            "compiler_flag" : compiler_optimization.value,
+            "loop_unrolling_factor" : enable_loop_unrolling,
+            "source_code" : source_code,
+            "assembly_code" :
+
+            "pipeline_type" : pipeline_type,
+            "compiler_optimization" : compiler_optimization,
+            "enable_loop_unrolling" : enable_loop_unrolling,
+        }
+
+        with chat_config_path.open("w") as f:
+            json.dump(json_data, f, indent=4)
+
         logger.info("Analyzing Fibonacci function...")
 
         # Simulate with forwarding
@@ -199,6 +228,6 @@ async def simulate_pipelines(
 
         # workflow.clean()
 
-        return {"pipelines": json_data}
+        return {"workflow_id": workflow.workflow_id, "pipelines": json_data}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

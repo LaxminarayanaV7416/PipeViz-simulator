@@ -1,12 +1,19 @@
 import base64
 import json
+import os
 
 from loguru import logger
 from openai import OpenAI
 
 from src.models.processor_config_models import ProcessorConfig
 
-client = OpenAI()  # reads OPENAI_API_KEY from environment
+LITELLM_HOST = os.getenv("LITELLM_HOST", "localhost")
+MODEL_NAME = "local-llama3.2"
+
+client = OpenAI(
+    base_url=f"http://{LITELLM_HOST}:4000/v1",
+    api_key="my-master-key",
+)
 
 _SYSTEM_PROMPT = (
     "You are a computer architecture expert. "
@@ -96,7 +103,11 @@ _TOOL = {
                                 "description": "Stage at which this register must be ready, e.g. 'EX' or 'CO'",
                             },
                         },
-                        "required": ["instruction_type", "register_name", "ready_at_stage"],
+                        "required": [
+                            "instruction_type",
+                            "register_name",
+                            "ready_at_stage",
+                        ],
                     },
                 },
             },

@@ -1,6 +1,8 @@
 from enum import IntEnum, StrEnum
 from pathlib import Path
 
+from src.config import BASE_PATH
+
 
 class SupportedProgrammingLanguagesEnum(StrEnum):
     C = "c"
@@ -74,7 +76,7 @@ class RunnableCommands:
 
 
 class WorkflowPaths:
-    def __init__(self, base_path: Path):
+    def __init__(self, base_path: Path = BASE_PATH):
         self._base_path = base_path
 
     @property
@@ -92,9 +94,16 @@ class WorkflowPaths:
             path.mkdir(parents=True, exist_ok=True)
         return path
 
-    # @property
-    # def rust_docker_file(self) -> Path:
-    #     return self.assembly_assets / "rust.dockerfile"
+    def get_asm_file(self, workflow_id: str) -> Path:
+        return self.runs / f"{workflow_id}" / "main.asm"
+
+    def get_code_file(
+        self, workflow_id: str, language: SupportedProgrammingLanguagesEnum
+    ) -> Path:
+        if language == SupportedProgrammingLanguagesEnum.C:
+            return self.runs / f"{workflow_id}" / "test-fib.c"
+        else:
+            return self.runs / f"{workflow_id}" / "test-fib.cpp"
 
     @property
     def c_docker_file(self) -> Path:
@@ -104,9 +113,8 @@ class WorkflowPaths:
     def cpp_docker_file(self) -> Path:
         return self.assembly_assets / "cpp.dockerfile"
 
-    # @property
-    # def rust_mock_path(self) -> Path:
-    #     return self.mock_path / "test-fib.rs"
+    def get_chat_config_file(self, workflow_id: str) -> Path:
+        return self.runs / f"{workflow_id}" / "chat_config.json"
 
     @property
     def cpp_mock_path(self) -> Path:

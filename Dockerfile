@@ -29,6 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project
 
 COPY pipeviz /app/pipeviz
+RUN chown -R nonroot:nonroot /app/pipeviz
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 

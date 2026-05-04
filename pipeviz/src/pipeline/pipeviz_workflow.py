@@ -5,7 +5,6 @@ from uuid import uuid4
 
 from loguru import logger
 
-from src.config import BASE_PATH
 from src.enum_vault.workflow_enums import (
     CompilerOptimizationsEnum,
     DockerFileNamesEnum,
@@ -29,7 +28,7 @@ class PipeVizWorkflow:
             - copy the output object dump file to the runs directory.
         """
         self._id = uuid4()
-        self._paths = WorkflowPaths(BASE_PATH)
+        self._paths = WorkflowPaths()
         self._programming_language = programming_language
         self._commands = RunnableCommands()
 
@@ -40,6 +39,13 @@ class PipeVizWorkflow:
             # now create a new directory
             path.mkdir(parents=True, exist_ok=True)
         return path
+
+    @property
+    def workflow_id(self) -> str:
+        return str(self._id)
+
+    def get_chat_config_file(self) -> Path:
+        return self._paths.get_chat_config_file(str(self._id))
 
     def move_files(self, source: Path, destination: Path) -> bool:
         try:

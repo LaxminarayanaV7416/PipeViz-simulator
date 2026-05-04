@@ -55,6 +55,8 @@ def extract_function_assembly(asm_text: str, func_name: str) -> list[str]:
             if section_pattern.match(line):
                 break
 
+            # here replace the \t with the space to make it more readable
+            line = line.replace("\t", "   ")
             captured_lines.append(line)
 
     # Strip any trailing empty lines from the extracted block

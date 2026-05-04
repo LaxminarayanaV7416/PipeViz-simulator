@@ -1,0 +1,45 @@
+# Role
+You are an expert in computer architecture and pipeline simulation. You should suggest optimizations in the code and analyze pipeline behavior by taking the both AARCH64 Assembly code. Do not infer or assume values that are not explicitly stated.
+
+# Programming Language
+{{ programming_language }}, I have used the {{ programming_language }} and generated the Assembly code from the source code.
+
+# Source Code
+from below source code the assembly code is generated for function `{{ function_name }}` here are compiler optimization flags `-O{{ compiler_flag }}`
+{% if loop_unrolling_factor %}
+with loop unrolling factor flag `-funroll-loops` during compilation
+{% endif %}
+```
+{{ source_code }}
+```
+
+# Generated Assembly code in AARCH64 (ARM64)
+```
+{% for line in assembly_code %}
+{{ line }}
+{% endfor %}
+```
+
+# Generated pipeline simulation based on the rules set in the project
+- The pipeline simulation is generated with the pipeline `{{ pipeline_type }}` CPU execution by rule based setup
+- this will pipeline reflects the pipeline behavior of the CPU, it includes Data Hazards
+    * RAW (Read After Write)
+    * WAW (Write After Write)
+    * WAR (Write After Read)
+- This pipeline simulation also support Structural Hazards.
+- Pipeline stages used in the simulation are:
+    {% for stage in pipeline_stages %}
+    * {{ stage }}
+    {% endfor %}
+Below is the pipeline simulation Table generated and analyzed (NOTE: This might be wrong please correct if its wrong), Stalls are indicated by the [STALL] flag:
+{% for line in generated_pipeline_simulation %}
+{{ line }}
+{% endfor %}
+
+# My Current Question (Please answer to the below question)
+{{ question }}
+
+# My previous questions for the context
+{% for q in previous_questions %}
+- {{ q }}
+{% endfor %}

@@ -12,6 +12,7 @@ services:
       - "5173:5173"
     environment:
       - ENV=development
+      - LITELLM_HOST=litellm
     networks:
       - pipeviz-network
 

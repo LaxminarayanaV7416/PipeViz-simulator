@@ -5,19 +5,11 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, field_validator
 
-from src.enum_vault.pipeline_enums import (
-    DynamicInOrderStages,
-    HazardType,
-    InOrderSuperscalarStages,
-    OutOfOrderStages,
-    ScoreboardStages,
-    StaticInOrderStages,
-    TomasuloStages,
-    VLIWStages,
-)
+from src.enum_vault.pipeline_enums import HazardType
 
 BASE_PATH = (Path(__file__).parent / "..").resolve()
 OPSCODE_YAML_PATH = BASE_PATH / "assembly_assets" / "aarch64_opcodes.yaml"
+PROMPT_TEMPLATE_PATH = BASE_PATH / "assembly_assets" / "prompt_template.txt"
 
 
 class ARMOpsCodeClassification(BaseModel):
