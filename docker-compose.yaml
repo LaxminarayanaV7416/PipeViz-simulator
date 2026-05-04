@@ -1,54 +1,17 @@
 version: "3.9"
 
 services:
-  # Frontend service - React + Vite with Bun
-  pipeviz-ui:
-    build:
-      context: ./pipeviz-ui
-      dockerfile: Dockerfile
-    container_name: pipeviz-ui
-    ports:
-      - "5173:5173" # Vite default dev server port
-    environment:
-      - NODE_ENV=development
-      - VITE_API_BASE_URL=http://localhost:8000
-    volumes:
-      - ./pipeviz-ui/src:/usr/src/app/src # Hot reload for source files
-      - ./pipeviz-ui/index.html:/usr/src/app/index.html # Hot reload for index.html
-      - ./pipeviz-ui/public:/usr/src/app/public # Hot reload for public assets
-    depends_on:
-      - pipeviz
-    networks:
-      - pipeviz-network
-
   # Backend service - FastAPI with Python/uv
   pipeviz:
     build:
-      context: ./pipeviz
+      context: .
       dockerfile: Dockerfile
     container_name: pipeviz
     ports:
-      - "8000:5000"
+      - "5001:5001"
+      - "5173:5173"
     environment:
-      - PYTHONUNBUFFERED=1
       - ENV=development
-    volumes:
-      - source: ./pipeviz/src
-        target: /app/src
-        read_only: false
-        type: bind
-      - source: ./pipeviz/main.py
-        target: /app/main.py
-        read_only: false
-        type: bind
-      - source: "./pipeviz/runs"
-        target: "/app/runs"
-        read_only: false
-        type: bind
-      - source: /var/run/docker.sock
-        target: /var/run/docker.sock
-        read_only: false
-        type: bind
     networks:
       - pipeviz-network
 
@@ -60,6 +23,16 @@ services:
     volumes:
       - ./llm_models/ollama_models:/root/.ollama
     restart: unless-stopped
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - |
+        ollama serve &
+        sleep 5;
+        if ! ollama list | grep -q "llama3.2"; then
+          ollama pull llama3.2;
+        fi;
+        wait
     networks:
       - pipeviz-network
 
