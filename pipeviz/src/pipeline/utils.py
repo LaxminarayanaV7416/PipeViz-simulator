@@ -3,6 +3,8 @@ import re
 from argparse import ArgumentParser
 from pathlib import Path
 
+from jinja2 import Template
+
 
 def get_args():
     parser = ArgumentParser()
@@ -82,6 +84,12 @@ def read_json_data(path: Path) -> dict:
     except Exception as e:
         print(f"Failed to read JSON data: {e}")
         return {}
+
+
+def render_template(template_path: Path, template_options: dict) -> str:
+    with template_path.open("r") as f:
+        template = Template(f.read())
+    return template.render(**template_options)
 
 
 # ==========================================

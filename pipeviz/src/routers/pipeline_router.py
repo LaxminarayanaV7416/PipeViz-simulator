@@ -5,9 +5,7 @@ Authors:
     - Laxminarayana Vadnala <lvadnala@nd.edu>
 """
 
-import json
 from pathlib import Path
-from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
@@ -37,7 +35,6 @@ from src.pipeline.pipeviz_workflow import PipeVizWorkflow
 from src.pipeline.simulate_pipeline import PipelineSimulator
 from src.pipeline.utils import (
     extract_function_assembly,
-    read_json_data,
     update_chat_required_data,
 )
 
@@ -213,6 +210,8 @@ async def simulate_pipelines(
             "assembly_code": function_lines,
             "pipeline_type": pipeline_type.value,
             "pipeline_stages": pipe_line_details.get("stages"),
+            "previous_questions": [],
+            "question": "",
         }
 
         update_chat_required_data(chat_config_path, chat_required_data)

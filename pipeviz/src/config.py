@@ -9,7 +9,7 @@ from src.enum_vault.pipeline_enums import HazardType
 
 BASE_PATH = (Path(__file__).parent / "..").resolve()
 OPSCODE_YAML_PATH = BASE_PATH / "assembly_assets" / "aarch64_opcodes.yaml"
-PROMPT_TEMPLATE_PATH = BASE_PATH / "assembly_assets" / "prompt_template.txt"
+PROMPT_TEMPLATE_PATH = BASE_PATH / "assembly_assets" / "prompt_template.md.j2"
 
 
 class ARMOpsCodeClassification(BaseModel):
