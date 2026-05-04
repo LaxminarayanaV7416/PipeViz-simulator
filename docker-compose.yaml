@@ -52,6 +52,34 @@ services:
     networks:
       - pipeviz-network
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./llm_models/ollama_models:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - pipeviz-network
+
+  litellm:
+    image: ghcr.io/berriai/litellm-database:main-latest
+    container_name: litellm
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./llm_models/config.yml:/app/config.yaml
+    command: --config /app/config.yaml --port 4000
+    environment:
+      - LITELLM_MASTER_KEY=my-master-key
+    restart: unless-stopped
+    networks:
+      - pipeviz-network
+
+volumes:
+  llm_models:
+
 networks:
   pipeviz-network:
     driver: bridge

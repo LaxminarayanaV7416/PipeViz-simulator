@@ -1,0 +1,9 @@
+model_list:
+  - model_name: "local-llama3.2" # what your Python code will use
+    litellm_params:
+      model: "ollama/llama3.2"
+      api_base: "http://ollama:11434"
+      api_key: "ignored"
+
+litellm_settings:
+  turn_off_message_logging: true
