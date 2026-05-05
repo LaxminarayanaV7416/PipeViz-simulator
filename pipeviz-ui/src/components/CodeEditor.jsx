@@ -141,7 +141,11 @@ export default function CodeEditor({
 
   function handleSubmit() {
     if (!code.trim()) {
-      alert("Please write some code first");
+      alert("Please write some code first.");
+      return;
+    }
+    if (!functionName.trim()) {
+      alert("Please enter a function name to simulate.");
       return;
     }
     onCodeSubmuit({

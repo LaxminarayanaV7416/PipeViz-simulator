@@ -135,7 +135,7 @@ async def get_pipeline_details(pipeline_type: PipelineTypes):
 async def simulate_pipelines(
     language: SupportedProgrammingLanguagesEnum,
     code: str = Body(default="", embed=True),
-    mock_exsisting_code: bool = False,
+    mock_existing_code: bool = False,
     function_name: str = "main",
     pipeline_type: PipelineTypes = PipelineTypes.STATIC_IN_ORDER,
     compiler_optimization: CompilerOptimizationsEnum = CompilerOptimizationsEnum.LEVEL_0,
@@ -145,7 +145,7 @@ async def simulate_pipelines(
         # validate the code and generate assembly code
         workflow = PipeVizWorkflow(language)
 
-        if mock_exsisting_code:
+        if mock_existing_code:
             if language == SupportedProgrammingLanguagesEnum.C:
                 code_path = workflow._paths.c_mock_path
             elif language == SupportedProgrammingLanguagesEnum.CPP:
