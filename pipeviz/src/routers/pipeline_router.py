@@ -7,7 +7,7 @@ Authors:
 
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Body, HTTPException, status
 from loguru import logger
 
 from src.enum_vault.pipeline_enums import (
@@ -134,7 +134,7 @@ async def get_pipeline_details(pipeline_type: PipelineTypes):
 @router.post("/simulate_pipelines", response_model=None)
 async def simulate_pipelines(
     language: SupportedProgrammingLanguagesEnum,
-    code: str = "",
+    code: str = Body(default="", embed=True),
     mock_exsisting_code: bool = False,
     function_name: str = "main",
     pipeline_type: PipelineTypes = PipelineTypes.STATIC_IN_ORDER,

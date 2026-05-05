@@ -15,14 +15,25 @@ export default function CodeEditor({
   defaultCode = "",
   defaultLanguage = "c",
   onLanguageChange,
-  processorConfig = null,
 }) {
   const [language, setLanguage] = useState(defaultLanguage);
   const [code, setCode] = useState(defaultCode);
   const [languages, setLanguages] = useState([]);
   const fileInputRef = useRef(null);
-  const [pipelines, setPipelines] = useState([]);
-  const [selectedPipeline, setSelectedPipeline] = useState("");
+  const DEFAULT_PIPELINES = [
+    "static_in_order",
+    "scoreboard",
+    "dynamic_in_order",
+    "in_order_superscalar",
+    "vliw",
+    "tomasulo",
+    "out_of_order",
+  ];
+  const [pipelines, setPipelines] = useState(DEFAULT_PIPELINES);
+  const [selectedPipeline, setSelectedPipeline] = useState(DEFAULT_PIPELINES[0]);
+  const [functionName, setFunctionName] = useState("fibonacci");
+  const [compilerOptimization, setCompilerOptimization] = useState(0);
+  const [enableLoopUnrolling, setEnableLoopUnrolling] = useState(false);
 
   useEffect(() => {
     setCode(defaultCode);
@@ -61,7 +72,6 @@ export default function CodeEditor({
         const fallback = [
           { label: "C", value: "c" },
           { label: "C++", value: "cpp" },
-          { label: "Rust", value: "rust" },
         ];
         setLanguages(fallback);
         setLanguage((current) =>
@@ -126,7 +136,6 @@ export default function CodeEditor({
     };
     reader.readAsText(file);
 
-    // Allow re-uploading the same file
     event.target.value = "";
   }
 
@@ -135,7 +144,14 @@ export default function CodeEditor({
       alert("Please write some code first");
       return;
     }
-    onCodeSubmuit({ code, language });
+    onCodeSubmuit({
+      code,
+      language,
+      functionName,
+      pipelineType: selectedPipeline,
+      compilerOptimization,
+      enableLoopUnrolling,
+    });
   }
 
   function handleLanguageChange(e) {
@@ -143,6 +159,9 @@ export default function CodeEditor({
     setLanguage(newLang);
     if (onLanguageChange) onLanguageChange(newLang);
   }
+
+  const labelStyle = { fontSize: "13px", color: "#9ca3af", marginRight: "6px" };
+  const inputStyle = { padding: "5px 8px", fontSize: "13px", background: "#1e1e1e", color: "#e5e7eb", border: "1px solid #444", borderRadius: "4px" };
 
   return (
     <div
@@ -153,40 +172,71 @@ export default function CodeEditor({
         gap: "12px",
       }}
     >
-      <select
-        value={language}
-        onChange={handleLanguageChange}
-        style={{ width: "fit-content", padding: "6px 10px", fontSize: "14px" }}
-      >
-        {languages.map((lang) => (
-          <option key={lang.value} value={lang.value}>
-            {lang.label}
-          </option>
-        ))}
-      </select>
-
-      {processorConfig ? (
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px" }}>
-          <span style={{ color: "#9ca3af" }}>Pipeline:</span>
-          <span style={{ backgroundColor: "#0f2d1f", border: "1px solid #10b981", borderRadius: "4px", color: "#10b981", padding: "4px 10px" }}>
-            {processorConfig.scheduling_policy}
-          </span>
-          <span style={{ color: "#555", fontSize: "12px" }}>configured ⚙</span>
+      {/* Row 1: Language + Pipeline */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <label style={labelStyle}>Language:</label>
+          <select value={language} onChange={handleLanguageChange} style={inputStyle}>
+            {languages.map((lang) => (
+              <option key={lang.value} value={lang.value}>{lang.label}</option>
+            ))}
+          </select>
         </div>
-      ) : (
-        <>
-          <label style={{ marginRight: "8px", fontSize: "14px" }}>Pipeline:</label>
+
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <label style={labelStyle}>Pipeline:</label>
           <select
             value={selectedPipeline}
             onChange={(e) => setSelectedPipeline(e.target.value)}
-            style={{ padding: "6px 10px", fontSize: "14px" }}
+            style={inputStyle}
           >
             {pipelines.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
-        </>
-      )}
+        </div>
+      </div>
+
+      {/* Row 2: Function Name + Optimization + Loop Unrolling */}
+      <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <label style={labelStyle}>Function Name:</label>
+          <input
+            type="text"
+            value={functionName}
+            onChange={(e) => setFunctionName(e.target.value)}
+            style={{ ...inputStyle, width: "120px" }}
+          />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <label style={labelStyle}>Optimization:</label>
+          <select
+            value={compilerOptimization}
+            onChange={(e) => setCompilerOptimization(Number(e.target.value))}
+            style={inputStyle}
+          >
+            {[0, 1, 2, 3].map((lvl) => (
+              <option key={lvl} value={lvl}>{lvl}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <input
+            type="checkbox"
+            id="loopUnrolling"
+            checked={enableLoopUnrolling}
+            onChange={(e) => setEnableLoopUnrolling(e.target.checked)}
+            style={{ cursor: "pointer" }}
+          />
+          <label htmlFor="loopUnrolling" style={{ ...labelStyle, marginRight: 0, cursor: "pointer" }}>
+            Loop Unrolling
+          </label>
+        </div>
+      </div>
+
+      {/* File upload */}
       <input
         ref={fileInputRef}
         type="file"
@@ -195,18 +245,16 @@ export default function CodeEditor({
         onChange={handleFileUpload}
         style={{ display: "none" }}
       />
-
-      <button
-        onClick={() => fileInputRef.current.click()}
-        style={{ width: "fit-content" }}
-      >
+      <button onClick={() => fileInputRef.current.click()} style={{ width: "fit-content" }}>
         Upload File
       </button>
+
+      {/* Code editor */}
       <div style={{ flex: 1, overflow: "auto", fontSize: "15px" }}>
         <CodeMirror
           value={code}
           onChange={(value) => setCode(value)}
-          extensions={[LANGUAGE_EXTENSIONS[language]]}
+          extensions={[LANGUAGE_EXTENSIONS[language] ?? cpp()]}
           theme="dark"
           height="100%"
           style={{ height: "100%" }}

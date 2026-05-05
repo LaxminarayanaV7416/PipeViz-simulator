@@ -1,17 +1,25 @@
 const STAGE_COLORS = {
     IF:  '#083D77',
+    ID:  '#157a6e',
     IS:  '#995D81',
-    EXE: '#DA4167',
+    EX:  '#DA4167',
     MEM: '#F4D35E',
     WB:  '#F78764',
+    RD:  '#3a7d44',
+    COM: '#b06a2b',
+    RO:  '#6a5acd',
 }
 
 const STALL_COLORS = {
     IF:  '#041e3c',
+    ID:  '#0a3d37',
     IS:  '#4d2e40',
-    EXE: '#6d1f32',
+    EX:  '#6d1f32',
     MEM: '#7a6a2f',
     WB:  '#7c3c2f',
+    RD:  '#1d3e22',
+    COM: '#583516',
+    RO:  '#352d66',
 }
 
 function parseCell(cell) {
@@ -30,8 +38,7 @@ export default function PipelineGrid({ rows }) {
         )
     }
 
-    const cycleKeys = Object.keys(rows[0])
-        .filter(k => /^C\d+$/.test(k))
+    const cycleKeys = [...new Set(rows.flatMap(row => Object.keys(row).filter(k => /^C\d+$/.test(k))))]
         .sort((a, b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
 
     return (

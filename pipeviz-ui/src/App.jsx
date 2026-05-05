@@ -7,7 +7,7 @@ import { callApi } from "./components/util";
 import "./App.css";
 
 function App() {
-  const [language, setLanguage] = useState("rust");
+  const [language, setLanguage] = useState("c");
   const [code, setCode] = useState("");
   const [processorConfig, setProcessorConfig] = useState(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
@@ -41,19 +41,22 @@ function App() {
     };
   }, [language]);
 
-  async function handleCodeSubmit({ code, language }) {
+  async function handleCodeSubmit({ code, language, functionName, pipelineType, compilerOptimization, enableLoopUnrolling }) {
     setSimLoading(true);
     setSimError(null);
 
     const res = await callApi({
       httpMethod: "POST",
       httpUrl: "/api/simulate_pipelines",
-      jsonData: {
+      queryParams: {
         language,
-        code,
-        function_name: "main",
-        processor_config: processorConfig ?? null,
+        mock_existing_code: false,
+        function_name: functionName,
+        pipeline_type: pipelineType,
+        compiler_optimization: compilerOptimization,
+        enable_loop_unrolling: enableLoopUnrolling,
       },
+      jsonData: { code },
     });
 
     setSimLoading(false);
@@ -92,41 +95,6 @@ function App() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          {/* Processor config button */}
-          <button
-            onClick={() => setShowConfigModal(true)}
-            style={{
-              alignItems: "center",
-              backgroundColor: processorConfig ? "#0f2d1f" : "#1e1e1e",
-              border: `1px solid ${processorConfig ? "#10b981" : "#444"}`,
-              borderRadius: "6px",
-              color: processorConfig ? "#10b981" : "#9ca3af",
-              cursor: "pointer",
-              display: "flex",
-              fontSize: "13px",
-              gap: "8px",
-              padding: "6px 14px",
-            }}
-          >
-            <span>⚙</span>
-            <span>
-              {processorConfig
-                ? `Processor: ${processorConfig.scheduling_policy}`
-                : "Configure Processor"}
-            </span>
-            <span
-              style={{
-                backgroundColor: processorConfig ? "#10b981" : "#333",
-                borderRadius: "10px",
-                color: processorConfig ? "#fff" : "#666",
-                fontSize: "11px",
-                padding: "1px 7px",
-              }}
-            >
-              {processorConfig ? "✓ Set" : "Not set"}
-            </span>
-          </button>
-
           {/* Team names */}
           <div
             style={{ display: "flex", gap: "24px", fontSize: "14px", color: "#9ca3af" }}
@@ -156,7 +124,6 @@ function App() {
             defaultLanguage={language}
             onLanguageChange={setLanguage}
             onCodeSubmuit={handleCodeSubmit}
-            processorConfig={processorConfig}
           />
         </Panel>
 
@@ -190,7 +157,7 @@ function App() {
         </Panel>
       </Group>
 
-      {/* Config modal */}
+      {/* Config modal (hidden until re-enabled) */}
       {showConfigModal && (
         <ProcessorConfigModal
           existingConfig={processorConfig}
