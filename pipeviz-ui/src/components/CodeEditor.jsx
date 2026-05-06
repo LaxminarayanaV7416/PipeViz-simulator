@@ -34,6 +34,7 @@ export default function CodeEditor({
   const [functionName, setFunctionName] = useState("fibonacci");
   const [compilerOptimization, setCompilerOptimization] = useState(0);
   const [enableLoopUnrolling, setEnableLoopUnrolling] = useState(false);
+  const [enableForwarding, setEnableForwarding] = useState(false);
 
   useEffect(() => {
     setCode(defaultCode);
@@ -155,6 +156,7 @@ export default function CodeEditor({
       pipelineType: selectedPipeline,
       compilerOptimization,
       enableLoopUnrolling,
+      enableForwarding,
     });
   }
 
@@ -236,6 +238,19 @@ export default function CodeEditor({
           />
           <label htmlFor="loopUnrolling" style={{ ...labelStyle, marginRight: 0, cursor: "pointer" }}>
             Loop Unrolling
+          </label>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <input
+            type="checkbox"
+            id="enableForwarding"
+            checked={enableForwarding}
+            onChange={(e) => setEnableForwarding(e.target.checked)}
+            style={{ cursor: "pointer" }}
+          />
+          <label htmlFor="enableForwarding" style={{ ...labelStyle, marginRight: 0, cursor: "pointer" }}>
+            Enable Forwarding
           </label>
         </div>
       </div>

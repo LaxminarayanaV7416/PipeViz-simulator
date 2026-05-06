@@ -140,6 +140,7 @@ async def simulate_pipelines(
     pipeline_type: PipelineTypes = PipelineTypes.STATIC_IN_ORDER,
     compiler_optimization: CompilerOptimizationsEnum = CompilerOptimizationsEnum.LEVEL_0,
     enable_loop_unrolling: bool = False,
+    enable_forwarding: bool = False,
 ):
     try:
         # validate the code and generate assembly code
@@ -222,7 +223,7 @@ async def simulate_pipelines(
         logger.info("SIMULATION WITH FORWARDING")
         logger.info("=" * 100)
         sim_forward = PipelineSimulator(
-            pipeline_type=pipeline_type, enable_forwarding=True
+            pipeline_type=pipeline_type, enable_forwarding=enable_forwarding
         )
         sim_forward.load_instructions(function_lines)
         sim_forward.simulate()
