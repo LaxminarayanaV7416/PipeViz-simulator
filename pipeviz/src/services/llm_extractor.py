@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from loguru import logger
@@ -41,6 +42,35 @@ def generate_prompt(prompt_data: dict) -> str:
         raise ValueError("Prompt exceeds the maximum length")
 
 
+def extract_backtick_content(text):
+    # Regex Breakdown:
+    # ```    : Matches the literal starting ticks
+    # (.*?)  : Captures any character (non-greedy) in a group
+    # ```    : Matches the literal ending ticks
+    # flags=re.DOTALL: Allows '.' to match newline characters
+    pattern = r"```(.*?)```"
+    return re.findall(pattern, text, flags=re.DOTALL)
+
+
+def optimize_response(response: str) -> str:
+    lines = response.split("\n")
+    response_lines = []
+    code_blocks = extract_backtick_content(response)
+    for line in lines:
+        if "```" not in line:
+            response_lines.append(line)
+    if code_blocks:
+        
+    return response
+
+
+def get_chat_history(workflow_id: str) -> list:
+    paths = WorkflowPaths()
+    chat_file_path: Path = paths.get_chat_config_file(workflow_id)
+    chat_config = read_json_data(chat_file_path)
+    return chat_config.get("question_llm_response", [])
+
+
 def ask_llm(workflow_id: str, question: str) -> str:
     paths = WorkflowPaths()
     chat_file_path: Path = paths.get_chat_config_file(workflow_id)
@@ -52,12 +82,18 @@ def ask_llm(workflow_id: str, question: str) -> str:
         previous_questions.append(temp_question)
     chat_config["previous_questions"] = previous_questions
     chat_config["question"] = question
-    update_chat_required_data(chat_file_path, chat_config)
     prompt = generate_prompt(chat_config)
     resp = client.chat.completions.create(
         model=MODEL_NAME,
         messages=[{"role": "user", "content": prompt}],
     )
     llm_response = resp.choices[0].message.content
+
+    optimized_response = optimize_response(llm_response)
+
     logger.info(llm_response)
+    question_llm_response = chat_config.get("question_llm_response", [])
+    question_llm_response.append({"question": question, "response": llm_response})
+    chat_config["question_llm_response"] = question_llm_response
+    update_chat_required_data(chat_file_path, chat_config)
     return llm_response

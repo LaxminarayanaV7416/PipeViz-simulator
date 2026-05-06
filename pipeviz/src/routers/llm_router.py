@@ -23,3 +23,16 @@ async def chat(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
+
+@router.get("/chat_history")
+async def get_chat_history(
+    workflow_id: str,
+):
+    try:
+        logger.info(f"Fetching chat history for workflow_id: {workflow_id}")
+        chat_history = 
+        return {"chat_history": chat_history}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )

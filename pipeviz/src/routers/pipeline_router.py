@@ -213,6 +213,7 @@ async def simulate_pipelines(
             "pipeline_stages": pipe_line_details.get("stages"),
             "previous_questions": [],
             "question": "",
+            "question_llm_response": [],
         }
 
         update_chat_required_data(chat_config_path, chat_required_data)
