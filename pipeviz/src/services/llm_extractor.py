@@ -14,13 +14,16 @@ from src.pipeline.utils import (
 
 PROMPT_LIMIT = 75000  # no of words / tokens
 
-LITELLM_HOST = os.getenv("LITELLM_HOST", "localhost")
-MODEL_NAME = "local-llama3.2"
+# LITELLM_HOST = os.getenv("LITELLM_HOST", "localhost")
+# MODEL_NAME = "local-llama3.2"
 
-client = OpenAI(
-    base_url=f"http://{LITELLM_HOST}:4000/v1",
-    api_key="my-master-key",
-)
+# client = OpenAI(
+#     base_url=f"http://{LITELLM_HOST}:4000/v1",
+#     api_key="my-master-key",
+# )
+
+client = OpenAI()
+MODEL_NAME = "gpt-4o"
 
 
 def check_prompt_length(prompt: str) -> bool:

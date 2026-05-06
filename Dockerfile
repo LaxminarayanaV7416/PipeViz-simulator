@@ -3,7 +3,12 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 # Install bun in a system path so nonroot can execute it
 ENV BUN_INSTALL=/usr/local/bun
 RUN apt-get update \
- && apt-get install -y curl zip unzip \
+ && apt-get install -y curl zip unzip ca-certificates gnupg \
+ && install -m 0755 -d /etc/apt/keyrings \
+ && curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+ && chmod a+r /etc/apt/keyrings/docker.gpg \
+ && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian bookworm stable" > /etc/apt/sources.list.d/docker.list \
+ && apt-get update && apt-get install -y docker-ce-cli \
  && rm -rf /var/lib/apt/lists/* \
  && curl -fsSL https://bun.sh/install | bash \
  && chmod -R a+rx /usr/local/bun
@@ -11,9 +16,10 @@ RUN apt-get update \
 ENV PATH="/usr/local/bun/bin:/app/.venv/bin:$PATH"
 
 
-# Setup a non-root user (same as backend Dockerfile)
-RUN groupadd --system --gid 999 nonroot \
- && useradd --system --gid 999 --uid 999 --create-home nonroot
+# Setup a non-root user
+# Docker socket access is granted via group_add: ["0"] in docker-compose
+RUN groupadd --system nonroot \
+ && useradd --system --gid nonroot --uid 999 --create-home nonroot
 
 WORKDIR /app
 
