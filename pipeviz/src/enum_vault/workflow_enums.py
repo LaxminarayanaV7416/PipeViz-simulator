@@ -105,6 +105,9 @@ class WorkflowPaths:
         else:
             return self.runs / f"{workflow_id}" / "test-fib.cpp"
 
+    def get_pipeline_path(self, workflow_id: str) -> Path:
+        return self.runs / f"{workflow_id}" / "pipeline.json"
+
     @property
     def c_docker_file(self) -> Path:
         return self.assembly_assets / "c.dockerfile"

@@ -257,6 +257,12 @@ async def simulate_pipelines(
             chat_history_data = read_json_data(chat_history_path)
         write_json_data(chat_history_path, chat_history_data)
 
+        # write the generated pipeline simulation to a new file
+        write_json_data(
+            workflow.get_pipeline_path(),
+            {"pipeline_data": json_data, "type": pipeline_type},
+        )
+
         return {"workflow_id": workflow.workflow_id, "pipelines": json_data}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

@@ -52,6 +52,9 @@ class PipeVizWorkflow:
     def get_history_file(self) -> Path:
         return self._paths.get_history_file(str(self._id))
 
+    def get_pipeline_path(self) -> Path:
+        return self._paths.get_pipeline_path(str(self._id))
+
     def move_files(self, source: Path, destination: Path) -> bool:
         try:
             shutil.copy(source, destination)

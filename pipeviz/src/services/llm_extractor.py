@@ -1,5 +1,5 @@
 import os
-import re
+from functools import total_ordering
 from pathlib import Path
 
 from loguru import logger
@@ -12,6 +12,7 @@ from src.pipeline.utils import (
     render_template,
     write_json_data,
 )
+from src.services.llm_tools import get_openai_tools
 
 PROMPT_LIMIT = 75000  # no of words / tokens
 
@@ -48,15 +49,9 @@ def model_predict(prompt: str, paths: WorkflowPaths, workflow_id: str) -> str:
     resp = client.chat.completions.create(
         model=MODEL_NAME,
         messages=[{"role": "user", "content": prompt}],
+        # tools=get_openai_tools(),
     )
     return resp.choices[0].message.content
-
-
-def chat_history_from_file(workflow_id: str) -> list:
-    paths = WorkflowPaths()
-    chat_file_path: Path = paths.get_history_file(workflow_id)
-    chat_config = read_json_data(chat_file_path)
-    return chat_config.get("responses", [])
 
 
 def ask_llm(workflow_id: str, question: str) -> str:
@@ -72,6 +67,10 @@ def ask_llm(workflow_id: str, question: str) -> str:
         previous_questions.append(temp_question)
     chat_config["previous_questions"] = previous_questions
     chat_config["question"] = question
+    # read pipeline and ingest into the prmpt
+    pipeline_path = paths.get_pipeline_path(workflow_id)
+    pipeline_data = read_json_data(pipeline_path)
+    chat_config["json_pipeline"] = pipeline_data
     prompt = generate_prompt(chat_config)
     llm_response = model_predict(prompt, paths, workflow_id)
     logger.info(llm_response)

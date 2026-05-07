@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
-from src.services.llm_extractor import ask_llm, chat_history_from_file
+from src.services.llm_extractor import ask_llm
+from src.services.llm_tools import read_chat_history_from_file
 
 router = APIRouter(tags=["LLM Chat Routes"], prefix="/api")
 
@@ -31,7 +32,7 @@ async def get_chat_history(
 ):
     try:
         logger.info(f"Fetching chat history for workflow_id: {workflow_id}")
-        chat_history = chat_history_from_file(workflow_id)
+        chat_history = read_chat_history_from_file(workflow_id)
         return {"chat_history": chat_history}
     except Exception as e:
         raise HTTPException(
