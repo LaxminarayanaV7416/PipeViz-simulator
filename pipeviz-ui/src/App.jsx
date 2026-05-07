@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { callApi } from "./components/util";
 // import { Routes, Route, Link } from "react-router-dom";
@@ -27,6 +27,9 @@ function App() {
   const [chatMessages, setChatMessages] = useState([]);
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState(null);
+  const [backendOnline, setBackendOnline] = useState(true);
+  const [llmOnline, setLlmOnline] = useState(true);
+  const hasAlertedRef = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,6 +56,50 @@ function App() {
       isMounted = false;
     };
   }, [language]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkHealth() {
+      const res = await callApi({
+        httpMethod: "GET",
+        httpUrl: "/api/health",
+      });
+
+      if (!isMounted) return;
+
+      const ok = !!res.ok;
+      setBackendOnline(ok);
+
+      if (!ok && !hasAlertedRef.current) {
+        hasAlertedRef.current = true;
+        alert("Backend is offline. Please start the API server.");
+      }
+    }
+
+    async function checkLLMHealth() {
+      const res = await callApi({
+        httpMethod: "GET",
+        httpUrl: "/api/llm_health",
+      });
+
+      if (!isMounted) return;
+
+      const ok = !!res.ok;
+      setLlmOnline(ok);
+
+      if (!ok && !hasAlertedRef.current) {
+        hasAlertedRef.current = true;
+      }
+    }
+
+    checkHealth();
+    checkLLMHealth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   async function handleCodeSubmit({
     code,
@@ -101,6 +148,7 @@ function App() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* Header */}
+      {/* Header */}
       <div
         style={{
           display: "flex",
@@ -111,6 +159,14 @@ function App() {
           flexShrink: 0,
         }}
       >
+        <style>{`
+          @keyframes statusPulse {
+            0% { opacity: 0.3; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0.3; transform: scale(0.9); }
+          }
+        `}</style>
+
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <img
             src="/ND_Monogram_10127_RGB.png"
@@ -128,8 +184,36 @@ function App() {
               gap: "24px",
               fontSize: "14px",
               color: "#9ca3af",
+              alignItems: "center",
             }}
           >
+            <span
+              title={backendOnline ? "Backend online" : "Backend offline"}
+              style={{
+                width: "15px",
+                height: "10px",
+                borderRadius: "999px",
+                backgroundColor: backendOnline ? "#10b981" : "#374151",
+                animation: backendOnline ? "statusPulse 1.2s infinite" : "none",
+                boxShadow: backendOnline ? "0 0 6px #10b981" : "none",
+              }}
+            />
+            <span>Backend</span>
+            <span>|</span>
+
+            <span
+              title={backendOnline ? "LLM online" : "LLM offline"}
+              style={{
+                width: "15px",
+                height: "10px",
+                borderRadius: "999px",
+                backgroundColor: backendOnline ? "#10b981" : "#374151",
+                animation: backendOnline ? "statusPulse 1.2s infinite" : "none",
+                boxShadow: backendOnline ? "0 0 6px #10b981" : "none",
+              }}
+            />
+            <span>LLM</span>
+            <span>|</span>
             <span>Laxminarayana Vadnala</span>
             <span>Patrick Do</span>
             <span>Jude Lynch</span>

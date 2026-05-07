@@ -1,3 +1,6 @@
+import os
+
+import requests
 from fastapi import APIRouter, HTTPException, status
 from loguru import logger
 
@@ -5,6 +8,27 @@ from src.services.llm_extractor import ask_llm
 from src.services.llm_tools import read_chat_history_from_file
 
 router = APIRouter(tags=["LLM Chat Routes"], prefix="/api")
+
+
+@router.get("/llm_health")
+async def health():
+    try:
+        model_type = os.getenv("MODEL_TYPE", "local")
+        if model_type == "local":
+            response = requests.get(
+                "http://localhost:4000/v1/models",
+                headers={"Authorization": "Bearer my-master-key"},
+                data={},
+            )
+            logger.info(f"Health check: {response.status_code}")
+            return {"status": "ok"}
+        else:
+            # cloud model health check
+            return {"status": "ok"}
+    except requests.RequestException:
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Health check failed"
+        )
 
 
 @router.post("/chat", response_model=None)
