@@ -10,7 +10,7 @@ from src.enum_vault.workflow_enums import WorkflowPaths
 from src.pipeline.utils import (
     read_json_data,
     render_template,
-    update_chat_required_data,
+    write_json_data,
 )
 
 PROMPT_LIMIT = 75000  # no of words / tokens
@@ -52,11 +52,11 @@ def model_predict(prompt: str, paths: WorkflowPaths, workflow_id: str) -> str:
     return resp.choices[0].message.content
 
 
-def get_chat_history(workflow_id: str) -> list:
+def chat_history_from_file(workflow_id: str) -> list:
     paths = WorkflowPaths()
-    chat_file_path: Path = paths.get_chat_config_file(workflow_id)
+    chat_file_path: Path = paths.get_history_file(workflow_id)
     chat_config = read_json_data(chat_file_path)
-    return chat_config.get("question_llm_response", [])
+    return chat_config.get("responses", [])
 
 
 def ask_llm(workflow_id: str, question: str) -> str:
@@ -78,6 +78,6 @@ def ask_llm(workflow_id: str, question: str) -> str:
     question_llm_response = chat_history_data.get("responses", [])
     question_llm_response.append({"question": question, "response": llm_response})
     chat_history_data["responses"] = question_llm_response
-    update_chat_required_data(chat_history, chat_history_data)
-    update_chat_required_data(chat_file_path, chat_config)
+    write_json_data(chat_history, chat_history_data)
+    write_json_data(chat_file_path, chat_config)
     return llm_response

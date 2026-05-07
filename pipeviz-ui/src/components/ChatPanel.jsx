@@ -2,7 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import Markdown from "react-markdown";
 import { callApi } from "./util";
 
-export default function ChatPanel({ workflowId, messages, onMessagesChange, onClose }) {
+export default function ChatPanel({
+  workflowId,
+  messages,
+  onMessagesChange,
+  onClose,
+}) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
@@ -10,6 +15,46 @@ export default function ChatPanel({ workflowId, messages, onMessagesChange, onCl
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadHistory() {
+      if (!workflowId || messages.length > 0) return;
+
+      const res = await callApi({
+        httpMethod: "GET",
+        httpUrl: "/api/chat_history",
+        queryParams: { workflow_id: workflowId },
+      });
+
+      if (!isMounted) return;
+
+      const history = Array.isArray(res.data?.chat_history)
+        ? res.data.chat_history
+        : [];
+
+      if (history.length === 0) return;
+
+      const hydrated = history.flatMap((item) => {
+        const out = [];
+        if (item.question) out.push({ role: "user", content: item.question });
+        if (item.response)
+          out.push({ role: "assistant", content: item.response });
+        return out;
+      });
+
+      if (hydrated.length > 0) {
+        onMessagesChange(hydrated);
+      }
+    }
+
+    loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [workflowId, messages.length, onMessagesChange]);
 
   async function sendMessage() {
     const question = input.trim();
@@ -31,7 +76,10 @@ export default function ChatPanel({ workflowId, messages, onMessagesChange, onCl
       res.ok && res.data?.response
         ? res.data.response
         : `Error: ${res.data?.detail ?? "Chat request failed."}`;
-    onMessagesChange((prev) => [...prev, { role: "assistant", content: reply }]);
+    onMessagesChange((prev) => [
+      ...prev,
+      { role: "assistant", content: reply },
+    ]);
   }
 
   function handleKeyDown(e) {
@@ -49,7 +97,6 @@ export default function ChatPanel({ workflowId, messages, onMessagesChange, onCl
         height: "100%",
         borderTop: "1px solid #333",
         background: "#111827",
-        
       }}
     >
       {/* Header */}
@@ -99,7 +146,8 @@ export default function ChatPanel({ workflowId, messages, onMessagesChange, onCl
       >
         {messages.length === 0 && (
           <p style={{ color: "#6b7280", fontSize: "13px", margin: 0 }}>
-            Ask anything about the pipeline simulation — hazards, stalls, stage behaviour, optimisation tips…
+            Ask anything about the pipeline simulation — hazards, stalls, stage
+            behaviour, optimisation tips…
           </p>
         )}
 
@@ -115,7 +163,10 @@ export default function ChatPanel({ workflowId, messages, onMessagesChange, onCl
               style={{
                 maxWidth: "85%",
                 padding: "8px 12px",
-                borderRadius: msg.role === "user" ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+                borderRadius:
+                  msg.role === "user"
+                    ? "12px 12px 2px 12px"
+                    : "12px 12px 12px 2px",
                 background: msg.role === "user" ? "#2563eb" : "#1f2937",
                 color: "#e5e7eb",
                 fontSize: "13px",
@@ -125,20 +176,48 @@ export default function ChatPanel({ workflowId, messages, onMessagesChange, onCl
               {msg.role === "assistant" ? (
                 <Markdown
                   components={{
-                    p: ({ children }) => <p style={{ margin: "0 0 6px 0" }}>{children}</p>,
+                    p: ({ children }) => (
+                      <p style={{ margin: "0 0 6px 0" }}>{children}</p>
+                    ),
                     code: ({ children }) => (
-                      <code style={{ background: "#374151", padding: "1px 4px", borderRadius: "3px", fontSize: "12px" }}>
+                      <code
+                        style={{
+                          background: "#374151",
+                          padding: "1px 4px",
+                          borderRadius: "3px",
+                          fontSize: "12px",
+                        }}
+                      >
                         {children}
                       </code>
                     ),
                     pre: ({ children }) => (
-                      <pre style={{ background: "#374151", padding: "8px", borderRadius: "4px", overflowX: "auto", fontSize: "12px", margin: "4px 0" }}>
+                      <pre
+                        style={{
+                          background: "#374151",
+                          padding: "8px",
+                          borderRadius: "4px",
+                          overflowX: "auto",
+                          fontSize: "12px",
+                          margin: "4px 0",
+                        }}
+                      >
                         {children}
                       </pre>
                     ),
-                    ul: ({ children }) => <ul style={{ margin: "4px 0", paddingLeft: "18px" }}>{children}</ul>,
-                    ol: ({ children }) => <ol style={{ margin: "4px 0", paddingLeft: "18px" }}>{children}</ol>,
-                    li: ({ children }) => <li style={{ marginBottom: "2px" }}>{children}</li>,
+                    ul: ({ children }) => (
+                      <ul style={{ margin: "4px 0", paddingLeft: "18px" }}>
+                        {children}
+                      </ul>
+                    ),
+                    ol: ({ children }) => (
+                      <ol style={{ margin: "4px 0", paddingLeft: "18px" }}>
+                        {children}
+                      </ol>
+                    ),
+                    li: ({ children }) => (
+                      <li style={{ marginBottom: "2px" }}>{children}</li>
+                    ),
                   }}
                 >
                   {msg.content}

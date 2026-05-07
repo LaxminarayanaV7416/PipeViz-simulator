@@ -36,7 +36,8 @@ from src.pipeline.pipeviz_workflow import PipeVizWorkflow
 from src.pipeline.simulate_pipeline import PipelineSimulator
 from src.pipeline.utils import (
     extract_function_assembly,
-    update_chat_required_data,
+    read_json_data,
+    write_json_data,
 )
 
 router = APIRouter(tags=["Pipeline Routes"], prefix="/api")
@@ -210,6 +211,7 @@ async def simulate_pipelines(
 
         logger.info("Lets save the pipeline configuration for chat purposes..")
         chat_config_path: Path = workflow.get_chat_config_file()
+        chat_history_path: Path = workflow.get_history_file()
 
         with code_path.open("r") as f:
             source_code = f.readlines()
@@ -229,7 +231,7 @@ async def simulate_pipelines(
             "question": "",
         }
 
-        update_chat_required_data(chat_config_path, chat_required_data)
+        write_json_data(chat_config_path, chat_required_data)
 
         logger.info("Analyzing Fibonacci function...")
 
@@ -246,7 +248,14 @@ async def simulate_pipelines(
         markdown_data = sim_forward.convert_to_markdown(json_data)
 
         chat_required_data["generated_pipeline_simulation"] = markdown_data
-        update_chat_required_data(chat_config_path, chat_required_data)
+        write_json_data(chat_config_path, chat_required_data)
+
+        # check if it exists else create one
+        if not chat_history_path.exists():
+            chat_history_data = {"responses": []}
+        else:
+            chat_history_data = read_json_data(chat_history_path)
+        write_json_data(chat_history_path, chat_history_data)
 
         return {"workflow_id": workflow.workflow_id, "pipelines": json_data}
     except Exception as e:

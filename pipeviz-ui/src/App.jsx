@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { callApi } from "./components/util";
-import { Routes, Route, Link } from 'react-router-dom';
-import ProfilePage from './pages/ProfilePage';
+import { Routes, Route, Link } from "react-router-dom";
+import ProfilePage from "./pages/ProfilePage";
 import CodeEditor from "./components/CodeEditor";
 import PipelineGrid from "./components/PipelineGrid";
 import ChatPanel from "./components/ChatPanel";
@@ -99,29 +99,26 @@ function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/profiles" element={<ProfilePage />} />
-      <Route path="/" element={
-          <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-            {/* Header */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "10px 24px",
-                borderBottom: "1px solid #333",
-                flexShrink: 0,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <img
-                  src="/ND_Monogram_10127_RGB.png"
-                  alt="Logo"
-                  style={{ height: "40px" }}
-                />
-                <h1 style={{ margin: 0, fontSize: "22px" }}>PipeViz</h1>
-              </div>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "10px 24px",
+          borderBottom: "1px solid #333",
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <img
+            src="/ND_Monogram_10127_RGB.png"
+            alt="Logo"
+            style={{ height: "40px" }}
+          />
+          <h1 style={{ margin: 0, fontSize: "22px" }}>PipeViz</h1>
+        </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           {/* Team names */}
@@ -195,20 +192,19 @@ function App() {
               <button
                 onClick={() => setShowChat(true)}
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  padding: "24px",
-                  overflow: "hidden",
+                  fontSize: "13px",
+                  background: "#2563eb",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  padding: "6px 14px",
+                  cursor: "pointer",
                 }}
               >
-                <h2 style={{ marginTop: 0 }}>Code</h2>
-                <CodeEditor
-                  defaultCode={code}
-                  defaultLanguage={language}
-                  onLanguageChange={setLanguage}
-                  onCodeSubmuit={handleCodeSubmit}
-                />
-              </Panel>
+                Ask AI
+              </button>
+            )}
+          </div>
 
           {/* Status messages */}
           <div style={{ padding: "0 24px", flexShrink: 0 }}>

@@ -70,7 +70,7 @@ def extract_function_assembly(asm_text: str, func_name: str) -> list[str]:
     return captured_lines
 
 
-def update_chat_required_data(path: Path, new_data: dict) -> bool:
+def write_json_data(path: Path, new_data: dict) -> bool:
     try:
         with path.open("w") as f:
             json.dump(new_data, f)
