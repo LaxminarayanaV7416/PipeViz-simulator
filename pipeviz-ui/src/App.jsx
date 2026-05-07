@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { callApi } from "./components/util";
-import { Routes, Route, Link } from "react-router-dom";
-import ProfilePage from "./pages/ProfilePage";
+// import { Routes, Route, Link } from "react-router-dom";
+// import ProfilePage from "./pages/ProfilePage";
 import CodeEditor from "./components/CodeEditor";
 import PipelineGrid from "./components/PipelineGrid";
 import ChatPanel from "./components/ChatPanel";
