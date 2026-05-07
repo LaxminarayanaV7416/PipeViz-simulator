@@ -10,7 +10,9 @@ const AUTHORS = [
         bio: 'ADD BIO HERE.',
         email: 'lvadnala@nd.edu',
         photo: '/lax.jpg',
-        github: 'https://github.com/LaxminarayanaV7416'
+        github: 'https://github.com/LaxminarayanaV7416',
+        linkedin: 'https://www.linkedin.com/in/laxminarayana-vadnala/',
+        personalsite: 'https://laxminarayanav7416.github.io/'
     },
     {
         id: 'patrick',
@@ -20,7 +22,8 @@ const AUTHORS = [
         bio: 'ADD BIO HERE.',
         email: 'mdo23@nd.edu',
         photo: '/patrick.jpeg',
-        github: 'https://github.com/patdmp'
+        github: 'https://github.com/patdmp',
+        linkedin: 'https://www.linkedin.com/in/patrick-d/'
     },
     {
         id: 'jude',
@@ -30,7 +33,8 @@ const AUTHORS = [
         bio: 'Classics major who found himself here',
         email: 'jlynch23@nd.edu',
         photo: '/jude.jpg',
-        github: 'https://github.com/GiudaJude'
+        github: 'https://github.com/GiudaJude',
+        linkedin: 'https://www.linkedin.com/in/jude-lynch/',
     },
 ]
 
@@ -105,7 +109,7 @@ export default function ProfilesPage() {
                         </p>
                     )}
                     <div style={{display: 'flex', gap: '12px', marginTop: '20px'}}>
-                        <a href={author.github ?? '#'} 
+                        {author.github && (<a href={author.github ?? '#'} 
                         target="_blank" 
                         rel="noreferrer" 
                         style={{ color: '#9ca3af',
@@ -115,11 +119,42 @@ export default function ProfilesPage() {
                                     padding: '6px 12px'
                         }}>
                             <img
-                                src="/GitHub_Invertocat_White_Clearspace.svg"
+                                src="/GitHub_Invertocat_White.svg"
                                 alt="GitHub"
-                                style={{ width: '48px', height:'48px'}}
+                                style={{ width: '32px', height:'32px'}}
                             />
-                        </a>
+                        </a>)}
+                        {author.linkedin && (<a href={author.linkedin ?? '#'} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        style={{ color: '#9ca3af',
+                                    fontSize: '13px',
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                    padding: '6px 12px'
+                        }}>
+                            <img
+                                src="/InBug-White.png"
+                                alt="LinkedIn"
+                                style={{ width: '32px', height:'32px'}}
+                            />
+                        </a>)}
+                        {author.personalsite && (<a href={author.personalsite ?? '#'} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        style={{ color: '#ffffff',
+                                    fontSize: '13px',
+                                    textDecoration: 'none',
+                                    border: '2px solid #ffffff',
+                                    borderRadius: '10px',
+                                    padding: '10x 20px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    height: '32px',
+                                    boxSizing: 'border-box'
+                        }}>
+                            Website
+                        </a>)}
                     </div>
                 </section>
             ))}
