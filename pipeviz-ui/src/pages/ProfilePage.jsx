@@ -9,6 +9,8 @@ const AUTHORS = [
         lab: 'The Cooperative Computing Lab',
         bio: 'ADD BIO HERE.',
         email: 'lvadnala@nd.edu',
+        photo: '/lax.jpg',
+        github: 'https://github.com/LaxminarayanaV7416'
     },
     {
         id: 'patrick',
@@ -17,14 +19,18 @@ const AUTHORS = [
         lab: 'Machine Learning Lab',
         bio: 'ADD BIO HERE.',
         email: 'mdo23@nd.edu',
+        photo: '/patrick.jpeg',
+        github: 'https://github.com/patdmp'
     },
     {
         id: 'jude',
         name: 'Jude Lynch',
         role: 'Frontend Developer',
         lab: "Master's Student",
-        bio: 'ADDIO BIO HERE',
-        email: 'jlynch23@nd.edu'
+        bio: 'Classics major who found himself here',
+        email: 'jlynch23@nd.edu',
+        photo: '/jude.jpg',
+        github: 'https://github.com/GiudaJude'
     },
 ]
 
@@ -38,10 +44,43 @@ export default function ProfilesPage() {
         }
     }, [hash])
     return(
-        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px'}}>
-            <Link to="/" style={{ fontSize: '14px', color: '#9c3af'}}>
-                Return to PipeViz
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh'}}>
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 24px",
+                borderBottom: "1px solid #333",
+                flexShrink: 0,
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 10,
+                backgroundColor: '#16171d',
+            }}>
+            <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit'}}>
+                <img
+                  src="/ND_Monogram_10127_RGB.png"
+                  alt="Logo"
+                  style={{ height: "40px" }}
+                />
+                <h1 style={{ margin: 0, fontSize: "22px" }}>PipeViz</h1>
             </Link>
+            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                {/* Team names */}
+                <div style={{ display: "flex", gap: "24px", fontSize: "14px"}}>
+                    <Link to="/profiles#laxminarayana" style={{ color: '#ae9142' }}>Laxminarayana Vadnala</Link>
+                    <Link to="/profiles#patrick" style={{ color: '#ae9142' }}>Patrick Do</Link>
+                    <Link to="/profiles#jude" style={{ color: '#ae9142' }}>Jude Lynch</Link>
+                </div>
+            </div>
+        </div>
+              
+
+        <div style={{ maxWidth: '720px', margin: '0 auto', padding: '40px'}}>
             {AUTHORS.map((author) => (
                 <section
                     key={author.id}
@@ -50,18 +89,41 @@ export default function ProfilesPage() {
                         minHeight: '100vh',
                         paddingTop: '80px',
                         borderBottom: '1px solid #333',
-                    }}
-                >
-                    <h1 style={{ fontSize: '36px', margineBottom: '8px'}}>{author.name}</h1>
+                }}>
+                    <h1 style={{ fontSize: '36px', marginBottom: '8px', marginTop: 0}}>{author.name}</h1>
                     <p style={{ color: '#9ca3af', fontSize: '16px', marginBottom: '24px'}}>{author.role}</p>
-                    <p style={{ lineHeight: '1.7' }}>{author.bio}</p>
+                    
+                    <img
+                        src={author.photo}
+                        alt={author.name}
+                        style={{ width: '320px', height: '320px',  objectFit: 'cover', marginBottom: '24px'}}
+                    />
+                    <p style={{ lineHeight: '1.7', maxWidth: '600px', margin: '0 auto 16px auto'}}>{author.bio}</p>
                     {author.email && (
-                        <p style={{ marginTop: '16px', fontSize: '14px', color: '#9ca3af'}}>
-                            {author.emailx}
+                        <p style={{ marginTop: '16px', fontSize: '14px', color: '#9ca3af', marginBottom: '20px'}}>
+                            {author.email}
                         </p>
                     )}
+                    <div style={{display: 'flex', gap: '12px', marginTop: '20px'}}>
+                        <a href={author.github ?? '#'} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        style={{ color: '#9ca3af',
+                                    fontSize: '13px',
+                                    textDecoration: 'none',
+                                    borderRadius: '6px',
+                                    padding: '6px 12px'
+                        }}>
+                            <img
+                                src="/GitHub_Invertocat_White_Clearspace.svg"
+                                alt="GitHub"
+                                style={{ width: '48px', height:'48px'}}
+                            />
+                        </a>
+                    </div>
                 </section>
             ))}
         </div>
+    </div>
     )
 }

@@ -110,7 +110,7 @@ function App() {
               <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
                 {/* Team names */}
                 <div style={{ display: "flex", gap: "24px", fontSize: "14px"}}>
-                  <Link to="/profiles#laxinarayana" style={{ color: '#ae9142' }}>Laxminarayana Vadnala</Link>
+                  <Link to="/profiles#laxminarayana" style={{ color: '#ae9142' }}>Laxminarayana Vadnala</Link>
                   <Link to="/profiles#patrick" style={{ color: '#ae9142' }}>Patrick Do</Link>
                   <Link to="/profiles#jude" style={{ color: '#ae9142' }}>Jude Lynch</Link>
                 </div>
