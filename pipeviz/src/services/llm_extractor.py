@@ -27,7 +27,8 @@ else:
         base_url=f"http://{LITELLM_HOST}:4000/v1",
         api_key="my-master-key",
     )
-    MODEL_NAME = "local-llama3.2"
+    # MODEL_NAME = "local-llama3.2"
+    MODEL_NAME = "local-llama3.2-8k"
 
 
 def check_prompt_length(prompt: str) -> bool:
@@ -72,6 +73,7 @@ def ask_llm(workflow_id: str, question: str) -> str:
     pipeline_data = read_json_data(pipeline_path)
     chat_config["json_pipeline"] = pipeline_data
     prompt = generate_prompt(chat_config)
+    logger.info(f"Generated prompt: {prompt}")
     llm_response = model_predict(prompt, paths, workflow_id)
     logger.info(llm_response)
     question_llm_response = chat_history_data.get("responses", [])

@@ -137,6 +137,7 @@ function App() {
       setShowChat(false);
       setChatMessages([]);
     } else {
+      alert(res.data?.detail);
       setSimError(res.data?.detail ?? "Simulation failed.");
     }
   }

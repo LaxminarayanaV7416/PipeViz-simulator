@@ -188,7 +188,7 @@ async def simulate_pipelines(
             if function_name not in code:  # dont lower since we expect the exact match
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="function_name not found in code",
+                    detail=f"{function_name} function name not found in code",
                 )
 
             with open(code_path, "w") as f:
@@ -201,7 +201,7 @@ async def simulate_pipelines(
         if not result and not isinstance(asm_path, Path):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to generate assembly code: {asm_path}",
+                detail=f"Code Comilation failed!",
             )
 
         # read the assembly code
