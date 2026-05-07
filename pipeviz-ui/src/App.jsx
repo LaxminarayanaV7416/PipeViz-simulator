@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
+import { callApi } from "./components/util";
+import { Routes, Route, Link } from 'react-router-dom';
+import ProfilePage from './pages/ProfilePage';
 import CodeEditor from "./components/CodeEditor";
 import PipelineGrid from "./components/PipelineGrid";
 import ChatPanel from "./components/ChatPanel";
 import ProcessorConfigModal from "./components/config/ProcessorConfigModal";
-import { callApi } from "./components/util";
 import "./App.css";
 
 function App() {
@@ -81,156 +83,159 @@ function App() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "10px 24px",
-          borderBottom: "1px solid #333",
-          flexShrink: 0,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <img
-            src="/ND_Monogram_10127_RGB.png"
-            alt="Logo"
-            style={{ height: "40px" }}
-          />
-          <h1 style={{ margin: 0, fontSize: "22px" }}>PipeViz</h1>
-        </div>
+    <Routes>
+      <Route path="/profiles" element={<ProfilePage />} />
+      <Route path="/" element={
+          <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 24px",
+                borderBottom: "1px solid #333",
+                flexShrink: 0,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <img
+                  src="/ND_Monogram_10127_RGB.png"
+                  alt="Logo"
+                  style={{ height: "40px" }}
+                />
+                <h1 style={{ margin: 0, fontSize: "22px" }}>PipeViz</h1>
+              </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          {/* Team names */}
-          <div
-            style={{ display: "flex", gap: "24px", fontSize: "14px", color: "#9ca3af" }}
-          >
-            <span>Laxminarayana Vadnala</span>
-            <span>Patrick Do</span>
-            <span>Jude Lynch</span>
-          </div>
-        </div>
-      </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                {/* Team names */}
+                <div style={{ display: "flex", gap: "24px", fontSize: "14px"}}>
+                  <Link to="/profiles#laxinarayana" style={{ color: '#ae9142' }}>Laxminarayana Vadnala</Link>
+                  <Link to="/profiles#patrick" style={{ color: '#ae9142' }}>Patrick Do</Link>
+                  <Link to="/profiles#jude" style={{ color: '#ae9142' }}>Jude Lynch</Link>
+                </div>
+              </div>
+            </div>
 
-      <Group direction="horizontal" style={{ flex: 1, overflow: "hidden" }}>
-        {/* Left panel - code editor */}
-        <Panel
-          defaultSize={50}
-          minSize={20}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            padding: "24px",
-            overflow: "hidden",
-          }}
-        >
-          <h2 style={{ marginTop: 0 }}>Code</h2>
-          <CodeEditor
-            defaultCode={code}
-            defaultLanguage={language}
-            onLanguageChange={setLanguage}
-            onCodeSubmuit={handleCodeSubmit}
-          />
-        </Panel>
-
-        <Separator
-          style={{ width: "6px", backgroundColor: "#333", cursor: "col-resize" }}
-        />
-
-        {/* Right panel - pipeline grid + optional chat */}
-        <Panel
-          defaultSize={50}
-          minSize={20}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            height: "100%",
-          }}
-        >
-          {/* Header */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "24px 24px 0 24px",
-              flexShrink: 0,
-            }}
-          >
-            <h2 style={{ margin: 0 }}>Pipeline</h2>
-            {workflowId && !showChat && (
-              <button
-                onClick={() => setShowChat(true)}
+            <Group direction="horizontal" style={{ flex: 1, overflow: "hidden" }}>
+              {/* Left panel - code editor */}
+              <Panel
+                defaultSize={50}
+                minSize={20}
                 style={{
-                  fontSize: "13px",
-                  background: "#2563eb",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  padding: "6px 14px",
-                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  padding: "24px",
+                  overflow: "hidden",
                 }}
               >
-                Ask AI
-              </button>
-            )}
-          </div>
+                <h2 style={{ marginTop: 0 }}>Code</h2>
+                <CodeEditor
+                  defaultCode={code}
+                  defaultLanguage={language}
+                  onLanguageChange={setLanguage}
+                  onCodeSubmuit={handleCodeSubmit}
+                />
+              </Panel>
 
-          {/* Status messages */}
-          <div style={{ padding: "0 24px", flexShrink: 0 }}>
-            {simLoading && (
-              <div style={{ color: "#9ca3af", fontSize: "14px", marginTop: "12px" }}>
-                Compiling and simulating…
+              <Separator
+                style={{ width: "6px", backgroundColor: "#333", cursor: "col-resize" }}
+              />
+
+              {/* Right panel - pipeline grid + optional chat */}
+              <Panel
+                defaultSize={50}
+                minSize={20}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                  height: "100%",
+                }}
+              >
+                {/* Header */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "24px 24px 0 24px",
+                    flexShrink: 0,
+                  }}
+                >
+                  <h2 style={{ margin: 0 }}>Pipeline</h2>
+                  {workflowId && !showChat && (
+                    <button
+                      onClick={() => setShowChat(true)}
+                      style={{
+                        fontSize: "13px",
+                        background: "#2563eb",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        padding: "6px 14px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Ask AI
+                    </button>
+                  )}
+                </div>
+
+                {/* Status messages */}
+                <div style={{ padding: "0 24px", flexShrink: 0 }}>
+                  {simLoading && (
+                    <div style={{ color: "#9ca3af", fontSize: "14px", marginTop: "12px" }}>
+                      Compiling and simulating…
+                    </div>
+                  )}
+                  {simError && !simLoading && (
+                    <div style={{ color: "#f87171", fontSize: "13px", whiteSpace: "pre-wrap", marginTop: "12px" }}>
+                      {simError}
+                    </div>
+                  )}
+                </div>
+
+                {/* Pipeline grid — always full size */}
+                {!simLoading && (
+                  <div style={{ flex: 1, overflow: "auto", padding: "12px 24px 24px 24px" }}>
+                    <PipelineGrid rows={pipelineRows} />
+                  </div>
+                )}
+              </Panel>
+            </Group>
+
+            {/* Floating chat panel — bottom-right corner */}
+            {showChat && (
+              <div style={{
+                position: "fixed",
+                bottom: 0,
+                right: 0,
+                width: "380px",
+                height: "480px",
+                zIndex: 100,
+                display: "flex",
+                flexDirection: "column",
+                boxShadow: "0 -4px 24px rgba(0,0,0,0.5)",
+                borderRadius: "8px 0 0 0",
+                overflow: "hidden",
+              }}>
+                <ChatPanel workflowId={workflowId} messages={chatMessages} onMessagesChange={setChatMessages} onClose={() => setShowChat(false)} />
               </div>
             )}
-            {simError && !simLoading && (
-              <div style={{ color: "#f87171", fontSize: "13px", whiteSpace: "pre-wrap", marginTop: "12px" }}>
-                {simError}
-              </div>
+
+            {/* Config modal (hidden until re-enabled) */}
+            {showConfigModal && (
+              <ProcessorConfigModal
+                existingConfig={processorConfig}
+                onClose={() => setShowConfigModal(false)}
+                onConfirm={handleConfigConfirm}
+              />
             )}
           </div>
-
-          {/* Pipeline grid — always full size */}
-          {!simLoading && (
-            <div style={{ flex: 1, overflow: "auto", padding: "12px 24px 24px 24px" }}>
-              <PipelineGrid rows={pipelineRows} />
-            </div>
-          )}
-        </Panel>
-      </Group>
-
-      {/* Floating chat panel — bottom-right corner */}
-      {showChat && (
-        <div style={{
-          position: "fixed",
-          bottom: 0,
-          right: 0,
-          width: "380px",
-          height: "480px",
-          zIndex: 100,
-          display: "flex",
-          flexDirection: "column",
-          boxShadow: "0 -4px 24px rgba(0,0,0,0.5)",
-          borderRadius: "8px 0 0 0",
-          overflow: "hidden",
-        }}>
-          <ChatPanel workflowId={workflowId} messages={chatMessages} onMessagesChange={setChatMessages} onClose={() => setShowChat(false)} />
-        </div>
-      )}
-
-      {/* Config modal (hidden until re-enabled) */}
-      {showConfigModal && (
-        <ProcessorConfigModal
-          existingConfig={processorConfig}
-          onClose={() => setShowConfigModal(false)}
-          onConfirm={handleConfigConfirm}
-        />
-      )}
-    </div>
-  );
+      }/>
+    </Routes>
+  )
 }
 
 export default App;
