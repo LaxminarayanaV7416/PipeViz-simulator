@@ -215,3 +215,4 @@ runs/
 # Local files
 /local_PD/
 llm_models/ollama_models
+.DS_Store
