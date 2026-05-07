@@ -49,6 +49,7 @@ export default function ChatPanel({ workflowId, messages, onMessagesChange, onCl
         height: "100%",
         borderTop: "1px solid #333",
         background: "#111827",
+        
       }}
     >
       {/* Header */}

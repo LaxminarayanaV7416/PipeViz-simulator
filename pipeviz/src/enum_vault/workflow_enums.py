@@ -116,6 +116,9 @@ class WorkflowPaths:
     def get_chat_config_file(self, workflow_id: str) -> Path:
         return self.runs / f"{workflow_id}" / "chat_config.json"
 
+    def get_history_file(self, workflow_id: str) -> Path:
+        return self.runs / f"{workflow_id}" / "chat_history.json"
+
     @property
     def cpp_mock_path(self) -> Path:
         return self.mock_path / "test-fib.cpp"

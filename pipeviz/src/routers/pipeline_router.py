@@ -6,6 +6,7 @@ Authors:
 """
 
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import APIRouter, Body, HTTPException, status
 from loguru import logger
@@ -134,6 +135,7 @@ async def get_pipeline_details(pipeline_type: PipelineTypes):
 @router.post("/simulate_pipelines", response_model=None)
 async def simulate_pipelines(
     language: SupportedProgrammingLanguagesEnum,
+    uuid: str | None = None,
     code: str = Body(default="", embed=True),
     mock_existing_code: bool = False,
     function_name: str = "main",
@@ -143,8 +145,20 @@ async def simulate_pipelines(
     enable_forwarding: bool = False,
 ):
     try:
+        # set flag for a fresh treat everythign as new fresh run
+        fresh_run = True
         # validate the code and generate assembly code
-        workflow = PipeVizWorkflow(language)
+        if uuid is None:
+            workflow_id = str(uuid4())
+        else:
+            workflow_id = uuid
+            fresh_run = False
+        workflow = PipeVizWorkflow(language, uuid=workflow_id)
+
+        # clean the run directory for rerun of the workflow
+        # so that everything will be clear and fresh for the new run
+        if not fresh_run:
+            workflow.clean()
 
         if mock_existing_code:
             if language == SupportedProgrammingLanguagesEnum.C:
@@ -152,7 +166,7 @@ async def simulate_pipelines(
             elif language == SupportedProgrammingLanguagesEnum.CPP:
                 code_path = workflow._paths.cpp_mock_path
             result, asm_path = workflow.generate_asembly_code(
-                code_path, compiler_optimization, enable_loop_unrolling
+                code_path, compiler_optimization, enable_loop_unrolling, False
             )
         else:
             # we are not running mock code, so we use the provided code
@@ -213,7 +227,6 @@ async def simulate_pipelines(
             "pipeline_stages": pipe_line_details.get("stages"),
             "previous_questions": [],
             "question": "",
-            "question_llm_response": [],
         }
 
         update_chat_required_data(chat_config_path, chat_required_data)

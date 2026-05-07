@@ -11,6 +11,8 @@ BASE_PATH = (Path(__file__).parent / "..").resolve()
 OPSCODE_YAML_PATH = BASE_PATH / "assembly_assets" / "aarch64_opcodes.yaml"
 PROMPT_TEMPLATE_PATH = BASE_PATH / "assembly_assets" / "prompt_template.md.j2"
 
+HISTORY_FILES = [""]
+
 
 class ARMOpsCodeClassification(BaseModel):
     MOV_OPS: list[str] = []

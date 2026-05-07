@@ -15,16 +15,18 @@ from src.pipeline.utils import (
 
 PROMPT_LIMIT = 75000  # no of words / tokens
 
-# LITELLM_HOST = os.getenv("LITELLM_HOST", "localhost")
-# MODEL_NAME = "local-llama3.2"
+LITELLM_HOST = os.getenv("LITELLM_HOST", "localhost")
 
-# client = OpenAI(
-#     base_url=f"http://{LITELLM_HOST}:4000/v1",
-#     api_key="my-master-key",
-# )
-
-client = OpenAI()
-MODEL_NAME = "gpt-4o"
+model_type = os.getenv("MODEL_TYPE", "local")
+if model_type == "cloud":
+    client = OpenAI()
+    MODEL_NAME = "gpt-4o"
+else:
+    client = OpenAI(
+        base_url=f"http://{LITELLM_HOST}:4000/v1",
+        api_key="my-master-key",
+    )
+    MODEL_NAME = "local-llama3.2"
 
 
 def check_prompt_length(prompt: str) -> bool:
@@ -42,26 +44,12 @@ def generate_prompt(prompt_data: dict) -> str:
         raise ValueError("Prompt exceeds the maximum length")
 
 
-def extract_backtick_content(text):
-    # Regex Breakdown:
-    # ```    : Matches the literal starting ticks
-    # (.*?)  : Captures any character (non-greedy) in a group
-    # ```    : Matches the literal ending ticks
-    # flags=re.DOTALL: Allows '.' to match newline characters
-    pattern = r"```(.*?)```"
-    return re.findall(pattern, text, flags=re.DOTALL)
-
-
-def optimize_response(response: str) -> str:
-    lines = response.split("\n")
-    response_lines = []
-    code_blocks = extract_backtick_content(response)
-    for line in lines:
-        if "```" not in line:
-            response_lines.append(line)
-    if code_blocks:
-        
-    return response
+def model_predict(prompt: str, paths: WorkflowPaths, workflow_id: str) -> str:
+    resp = client.chat.completions.create(
+        model=MODEL_NAME,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return resp.choices[0].message.content
 
 
 def get_chat_history(workflow_id: str) -> list:
@@ -74,7 +62,9 @@ def get_chat_history(workflow_id: str) -> list:
 def ask_llm(workflow_id: str, question: str) -> str:
     paths = WorkflowPaths()
     chat_file_path: Path = paths.get_chat_config_file(workflow_id)
+    chat_history = paths.get_history_file(workflow_id)
     chat_config = read_json_data(chat_file_path)
+    chat_history_data = read_json_data(chat_history)
     # take current quesiton and move to previous asked questions
     previous_questions = chat_config.get("previous_questions", [])
     temp_question = chat_config.get("question", "")
@@ -83,17 +73,11 @@ def ask_llm(workflow_id: str, question: str) -> str:
     chat_config["previous_questions"] = previous_questions
     chat_config["question"] = question
     prompt = generate_prompt(chat_config)
-    resp = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    llm_response = resp.choices[0].message.content
-
-    optimized_response = optimize_response(llm_response)
-
+    llm_response = model_predict(prompt, paths, workflow_id)
     logger.info(llm_response)
-    question_llm_response = chat_config.get("question_llm_response", [])
+    question_llm_response = chat_history_data.get("responses", [])
     question_llm_response.append({"question": question, "response": llm_response})
-    chat_config["question_llm_response"] = question_llm_response
+    chat_history_data["responses"] = question_llm_response
+    update_chat_required_data(chat_history, chat_history_data)
     update_chat_required_data(chat_file_path, chat_config)
     return llm_response

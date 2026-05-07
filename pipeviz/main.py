@@ -6,6 +6,7 @@ Authors:
     - Laxminarayana Vadnala <lvadnala@nd.edu>
 """
 
+import os
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -42,4 +43,6 @@ app.include_router(llm_router.router)
 
 if __name__ == "__main__":
     args = get_args()
+    # set the model as an environment variable
+    os.environ["MODEL_TYPE"] = args.model_type
     uvicorn.run("main:app", host="0.0.0.0", port=args.port, reload=args.reload)

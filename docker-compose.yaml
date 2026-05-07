@@ -2,23 +2,23 @@ version: "3.9"
 
 services:
   # Backend service - FastAPI with Python/uv
-  pipeviz:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pipeviz
-    ports:
-      - "5001:5001"
-      - "5173:5173"
-    environment:
-      - ENV=development
-      - LITELLM_HOST=litellm
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    group_add:
-      - "0"
-    networks:
-      - pipeviz-network
+  # pipeviz:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: pipeviz
+  #   ports:
+  #     - "5001:5001"
+  #     - "5173:5173"
+  #   environment:
+  #     - ENV=development
+  #     - LITELLM_HOST=litellm
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   group_add:
+  #     - "0"
+  #   networks:
+  #     - pipeviz-network
 
   ollama:
     image: ollama/ollama:latest

@@ -1,7 +1,6 @@
 import shutil
 import subprocess
 from pathlib import Path
-from uuid import uuid4
 
 from loguru import logger
 
@@ -15,7 +14,9 @@ from src.enum_vault.workflow_enums import (
 
 
 class PipeVizWorkflow:
-    def __init__(self, programming_language: SupportedProgrammingLanguagesEnum):
+    def __init__(
+        self, programming_language: SupportedProgrammingLanguagesEnum, uuid: str
+    ):
         """
         input args
             programming_language: SupportedProgrammingLanguagesEnum - The programming language to use for the workflow.
@@ -27,7 +28,8 @@ class PipeVizWorkflow:
             - run the object dump generation command using docker.
             - copy the output object dump file to the runs directory.
         """
-        self._id = uuid4()
+
+        self._id = uuid
         self._paths = WorkflowPaths()
         self._programming_language = programming_language
         self._commands = RunnableCommands()
@@ -46,6 +48,9 @@ class PipeVizWorkflow:
 
     def get_chat_config_file(self) -> Path:
         return self._paths.get_chat_config_file(str(self._id))
+
+    def get_history_file(self) -> Path:
+        return self._paths.get_history_file(str(self._id))
 
     def move_files(self, source: Path, destination: Path) -> bool:
         try:
@@ -86,15 +91,25 @@ class PipeVizWorkflow:
             logger.exception(f"An exception occurred running the command: {e}")
             return False, result
 
-    def clean(self) -> None:
+    def clean(self) -> bool:
+        history_files = [self.get_history_file().name]
         if self.run_path.exists():
-            shutil.rmtree(self.run_path)
+            logger.info(f"Cleaning run directory: {self.run_path}")
+            # we have get the list of files as we want to retrieve the history of the chat
+            for file_name in self.run_path.iterdir():
+                if file_name.name not in history_files:
+                    file_name.unlink()
+                elif file_name.is_dir():
+                    shutil.rmtree(file_name)
+            return True
+        return False
 
     def generate_asembly_code(
         self,
         code_path: Path,
         compiler_optimization: CompilerOptimizationsEnum,
         enable_loop_unrolling: bool,
+        code_already_saved: bool = True,
     ) -> tuple[bool, list[str] | Path]:
         asm_path = self.run_path / "main.asm"
         program_file_name = code_path.name
@@ -110,9 +125,10 @@ class PipeVizWorkflow:
         file_name = src_path.name
         self.move_files(src_path, self.run_path / file_name)
 
-        # step 2: move the code file as well
-        file_name = code_path.name
-        self.move_files(code_path, self.run_path / file_name)
+        if not code_already_saved:
+            # step 2: move the code file as well
+            file_name = code_path.name
+            self.move_files(code_path, self.run_path / file_name)
 
         # step 3: do the docker build
         docker_build_command = self._commands.docker_build(

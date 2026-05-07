@@ -10,6 +10,9 @@ def get_args():
     parser = ArgumentParser()
     parser.add_argument("--port", type=int, default=5001)
     parser.add_argument("--reload", type=bool, default=True)
+    parser.add_argument(
+        "--model-type", type=str, default="local", choices=["local", "cloud"]
+    )
     return parser.parse_args()
 
 
