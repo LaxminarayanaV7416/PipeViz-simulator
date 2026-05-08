@@ -1,0 +1,19 @@
+% kopje met bijbehorende titel; varianten: \subsection, \subsubsection
+\section*{2. Introduction}
+
+Modern processors achieve high performance through pipelined execution, allowing multiple instructions to overlap across different stages of execution. While pipelining significantly improves instruction throughput, it also introduces execution challenges caused by instruction dependencies, resource contention, and control-flow disruptions. Data hazards such as Read After Write (RAW), Write After Read (WAR), and Write After Write (WAW), along with structural hazards caused by limited hardware resources, can introduce stalls that reduce overall pipeline efficiency. Understanding how these hazards emerge from real programs is essential for studying processor microarchitecture, compiler optimizations, and instruction scheduling techniques.
+
+Although pipeline behavior is widely taught in computer architecture courses, many existing educational tools rely on simplified examples or static diagrams that fail to demonstrate how modern compiled programs interact with realistic pipeline execution models. Additionally, the relationship between high-level source code, compiler-generated assembly, and cycle-level execution behavior is often difficult to visualize and reason about. Compiler optimizations such as loop unrolling, instruction scheduling, and vectorization can significantly alter instruction-level parallelism and hazard frequency, yet these effects are rarely observable in an integrated and interactive environment.
+
+PipeViz was developed to address this gap by providing an end-to-end platform for pipeline simulation, hazard analysis, and optimization exploration. The system enables users to input C/C++ programs, compile them into AArch64 assembly using configurable compiler optimization settings, and simulate the resulting instructions across multiple execution models including static in-order pipelines, scoreboarding, Tomasulo-based scheduling, and out-of-order execution. During simulation, PipeViz tracks instruction progression cycle-by-cycle while detecting data and structural hazards and visualizing stalls directly within the pipeline timeline.
+
+A major contribution of PipeViz is the integration of an LLM-driven optimization assistant that analyzes the generated assembly code and pipeline execution trace to provide context-aware explanations and optimization recommendations. Unlike traditional static code assistants, the LLM receives detailed micro architectural execution context, including hazard information, stall locations, compiler settings, and cycle-level pipeline state. This allows the assistant to reason about performance bottlenecks directly from observed execution behavior rather than relying solely on source-level heuristics.
+
+The combination of cycle-accurate simulation, compiler experimentation, visualization, and AI-assisted reasoning transforms PipeViz into both an educational and experimental platform for studying processor execution behavior. Through a series of case studies involving loop unrolling and cache-aware matrix multiplication, this project demonstrates how pipeline-aware optimization strategies influence hazard frequency, instruction scheduling, and overall execution efficiency across different architectural models.
+
+The primary objectives of this project are: \\
+(1) Develop a cycle-accurate pipeline simulator capable of modeling multiple execution architectures. \\
+(2) Detect and visualize RAW, WAR, WAW, and structural hazards during instruction execution. \\
+(3) Enable users to experiment with compiler optimizations and observe their microarchitectural impact. \\
+(4) Integrate an LLM assistant capable of analyzing pipeline execution traces and suggesting context-aware optimizations. \\
+(5) Demonstrate the relationship between high-level code transformations and low-level processor behavior through interactive case studies. \\

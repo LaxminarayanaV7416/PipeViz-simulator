@@ -1,0 +1,40 @@
+\section*{5. Pipeline Simulation Design}
+% The simulator is rule-based and implements multiple pipeline models:
+
+% \begin{enumerate}
+% \item Static in-order  
+% \item Scoreboard  
+% \item Dynamic in-order  
+% \item In-order superscalar  
+% \item Tomasulo  
+% \item VLIW  
+% \item Out-of-order  
+% \end{enumerate}
+
+% The simulator processes instructions cycle by cycle, tracks each instruction state, and detects hazards based on current stage occupancy and register dependencies. When hazards are present, stages are stalled and displayed with a `[STALL]` marker in the visualization.
+
+% Key design elements:
+
+% \begin{enumerate}
+% \item \textbf{Instruction parsing} from ARM64 assembly (\textit{pipeline_base.py}).
+% \item \textbf{Hazard detection} through the \textit{HazardDetector} class.
+% \item \textbf{Stage modeling} through pipeline enums, allowing multiple pipeline types.
+% \item \textbf{Cycle-level state snapshots} stored as \textit{PipelineState}.
+% \end{enumerate}
+
+The simulator is rule-based and implements seven pipeline models. Each model is defined as a typed enumeration that declares its ordered stages and annotates which stages are susceptible to each hazard type. This design allows the simulation and hazard detection logic to operate generically across all models without branching on pipeline type.
+
+
+\textbf{Static In-Order:} A classic five-stage pipeline (IF $\to$ ID $\to$ EX $\to$ MEM $\to$ WB). RAW hazards are detected at the decode stage, structural hazards at decode, execute, and memory, and WAW hazards at writeback. This model produces the highest stall counts and serves as the performance baseline.
+
+\textbf{Scoreboard:} A five-stage model (IF $\to$ IS $\to$ RD $\to$ EX $\to$ WB) that separates instruction issue from operand read. RAW hazards are detected at the read-operands stage, and structural hazards at issue and execute. WAW hazards are flagged at issue because register renaming is not yet applied.
+
+\textbf{Dynamic In-Order:} A six-stage extension (IF $\to$ ID $\to$ IS $\to$ RD $\to$ EX $\to$ WB) that adds explicit decode and issue stages, providing finer-grained control over dispatch logic.
+
+\textbf{In-Order Superscalar:} A seven-stage pipeline (IF $\to$ ID $\to$ IS $\to$ EX $\to$ MEM $\to$ WB $\to$ COM) that adds a commit stage. Multiple instructions can be in flight simultaneously, but issue order is preserved and instructions retire in program order.
+
+\textbf{VLIW (Very Long Instruction Word):} A five-stage model structurally identical to the static in-order pipeline, but with all hazard-prone stage lists empty. Hazard avoidance is assumed to be handled entirely at compile time, with the compiler or programmer responsible for packing independent instructions into VLIW bundles.
+
+\textbf{Tomasulo:} A five-stage out-of-order model (IF $\to$ IS $\to$ EX $\to$ WB $\to$ COM) that models reservation stations and register renaming. WAR and WAW hazards are eliminated through renaming. RAW hazards are resolved via result tagging rather than stalling. Structural hazards remain possible when reservation stations or functional units are fully occupied.
+
+\textbf{Out-of-Order:} The most aggressive model, with six stages (IF $\to$ IS $\to$ RO $\to$ EX $\to$ WB $\to$ COM), where RO represents the reorder buffer (ROB) that enforces in-order retirement. All data hazards are eliminated via register renaming; only structural hazards remain, possible at issue, ROB, execute, and writeback.

@@ -1,0 +1,46 @@
+\section*{4. System Overview}
+
+\subsection*{4.1 PipeViz - Architecture}
+% PipeViz is organized into three main components:
+
+% \begin{enumerate}
+%     \item \textbf{Frontend (pipeviz-ui)}: A React application that lets users input code, choose pipeline types, and view a cycle-by-cycle pipeline table.
+%     \item \textbf{Backend (pipeviz)}: A FastAPI server that parses assembly, simulates pipeline execution, and detects hazards.
+%     \item \textbf{LLM Assistant}: A prompt-driven optimization assistant that uses simulation output to propose improvements.
+% \end{enumerate}
+
+PipeViz is designed as a modular full-stack architecture that combines compilation infrastructure, pipeline simulation, visualization, and AI-assisted analysis into a unified workflow. The platform bridges the gap between high-level programming constructs and low-level processor execution by enabling users to move seamlessly from C/C++ source code to cycle-accurate pipeline analysis. The system architecture consists of three primary components: a React-based frontend visualization interface, a FastAPI-based \cite{fastapi} backend simulation engine, and an LLM-powered \cite{chatgpt, ollama} optimization assistant that performs context-aware reasoning over the generated execution data.
+
+PipeViz is organized into three main components:
+
+\textbf{Frontend (pipeviz-ui):} A React \cite{react, bun} application built with a syntax-highlighted code editor that lets users input C or C++ source code, select from seven pipeline models, configure compiler optimization levels (O0--O3), toggle loop unrolling and data forwarding, and view a cycle-by-cycle pipeline table. An integrated chat panel enables natural-language queries against the active simulation context. The full interface is shown in Figure~\ref{fig:interface}.
+
+\textbf{Backend (pipeviz):} A FastAPI server that orchestrates four responsibilities: (1) invoking Docker-based \cite{docker} cross-compilation to generate AArch64 assembly, (2) parsing the resulting assembly into a structured instruction representation, (3) running a cycle-accurate simulation with hazard detection, and (4) persisting simulation context for downstream LLM queries.
+
+\textbf{LLM Assistant:} A prompt-driven optimization assistant that uses a structured Jinja2 template containing the source code, generated assembly, and pipeline simulation table to query OpenAI's GPT-4o model, returning natural-language optimization recommendations grounded in the specific simulation output.
+
+\subsection*{4.2 Workflow}
+% The user workflow is:
+
+% \begin{enumerate}
+%     \item \textbf{Input source code} in the UI.  
+%     \item \textbf{Assembly generation} (AArch64) using compiler tools.  
+%     \item \textbf{Pipeline simulation} with hazard detection.  
+%     \item \textbf{Visualization} of each instruction’s stage per cycle.  
+%     \item \textbf{LLM analysis} using the prompt template, producing optimization suggestions.  
+%     \item \textbf{Re-simulation} to compare hazards and stalls.
+% \end{enumerate}
+
+\textbf{Input:} The user enters source code in the editor and selects the target language (C or C++), pipeline model, compiler optimization level, and forwarding and loop unrolling options.
+
+\textbf{Assembly generation:} The backend copies the source file and a language-specific Dockerfile into a temporary working directory, then invokes \texttt{docker build} with build arguments encoding the selected compiler flags. After the image builds, the container is instantiated, and the compiled AArch64 disassembly is extracted via \texttt{docker cp}. The container and image are cleaned up immediately after extraction.
+
+\textbf{Function extraction:} A regular expression locates the target function symbol in the disassembly output and extracts its instruction lines, stopping at the next function boundary or section header.
+
+\textbf{Pipeline simulation:} The simulator loads the parsed instruction stream and advances instructions through the pipeline cycle by cycle, recording a state snapshot at each cycle. Each snapshot captures stage occupancy, stall status, active hazards, and any forwarding paths.
+
+\textbf{Visualization:} The simulation output is serialized as a JSON matrix---one row per instruction, one column per cycle---and rendered by the frontend as a color-coded grid. Each cell displays the stage name (e.g., \texttt{EX}) or \texttt{EX s} when a stall is active. Stage colors are consistent across all pipeline models: IF (blue), ID (teal), EX (red), MEM (yellow), WB (orange), IS (purple), and COM (brown).
+
+\textbf{LLM analysis:} The simulation context---source code, assembly, pipeline table, and prior questions---is persisted and passed to the LLM assistant when the user submits a natural-language query via the chat panel. The model returns an optimization recommendation tied to the observed hazards and stall patterns.
+
+\textbf{Re-simulation:} The user can apply the suggested changes and re-submit the code, enabling direct before-and-after comparison of stall counts and hazard frequency across pipeline models.

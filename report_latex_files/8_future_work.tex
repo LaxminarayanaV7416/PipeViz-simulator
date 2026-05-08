@@ -1,0 +1,51 @@
+\section*{8. Limitation of PipeViz and Future Work}
+
+\subsection*{Limitations}
+
+Despite demonstrating the effectiveness of combining pipeline visualization with LLM-assisted optimization, PipeViz has several architectural and system-level limitations.
+
+\textbf{Platform Dependency:} The system is currently designed for Apple Silicon (ARM64) macOS environments using Docker-based workflows. It is not directly compatible with x86 architectures without additional toolchain modifications, limiting portability.
+
+\textbf{Limited ISA and Language Support:} PipeViz currently supports only C/C++ input, compiled to AArch64 assembly. Direct support for other ISAs (e.g., x86, RISC-V, MIPS) or raw assembly input is not yet available.
+
+\textbf{Simplified Micro architectural Model:} The simulator abstracts several processor components such as cache hierarchies, branch prediction, speculative execution, reorder buffers, and realistic functional unit latencies. It is primarily designed for educational visualization rather than cycle-accurate simulation.
+
+\textbf{Incomplete Memory System Modeling:} Cache coherence, multi-level caches, TLB behavior, prefetching, and DRAM timing are not fully implemented, limiting memory system realism.
+
+\textbf{LLM Context Limitations:} Large programs and detailed execution traces can exceed token limits. Cloud-based models with larger context windows perform well, while local models struggle with scalability.
+
+\textbf{Local LLM Constraints:} The integrated 3.2B Ollama model enables offline usage but has limited reasoning capability over long traces and produces lower-quality optimization suggestions compared to cloud models.
+
+\textbf{Unverified Optimization Suggestions:} LLM-generated optimizations require human validation, as they may be incomplete or not architecture-aware.
+
+\textbf{Scalability Overhead:} Cycle-by-cycle state tracking increases memory and computation cost for large programs or heavily optimized code.
+
+\textbf{Static Pipeline Configuration:} Pipeline parameters such as issue width, stage depth, and functional unit latencies are fixed and not user-configurable at runtime.
+
+\subsection*{Future Work}
+
+Future development of PipeViz can significantly expand its scope across architecture support, simulation fidelity, and AI integration.
+
+\textbf{Cross-Platform and x86 Support:} Extend compatibility to x86 systems, Linux, and Windows environments for broader accessibility.
+
+\textbf{Multi-ISA Support:} Add support for x86-64, RISC-V, MIPS, and custom ISAs to enable cross-architecture pipeline comparison.
+
+\textbf{Direct Assembly Input:} Allow users to input raw assembly programs for simulation without requiring high-level language compilation.
+
+\textbf{Expanded Language Support:} Include Rust, Go, Zig, Swift, and GPU-style kernels to study diverse compiler outputs.
+
+\textbf{Richer Micro architectural Simulation:} Incorporate caches, branch prediction, speculative execution, reorder buffers, superscalar dispatch, and realistic memory timing models.
+
+\textbf{Automated Optimization Loop:} Enable an automatic pipeline where LLM suggestions are applied, compiled, simulated, and compared iteratively.
+
+\textbf{Improved Local LLM Integration:} Enhance local inference using larger models, retrieval augmentation, and context compression techniques.
+
+\textbf{Domain-Specific Fine-Tuned Models:} Train LLMs specifically on assembly traces and pipeline behavior for more accurate optimization guidance.
+
+\textbf{Advanced Visualization Tools:} Add dependency graphs, forwarding-path visualization, register lifetimes, and execution heatmaps.
+
+\textbf{Performance Analytics Dashboard:} Provide CPI/IPC metrics, stall statistics, and comparative execution analysis across pipeline configurations.
+
+\textbf{Collaborative Educational Features:} Support shared sessions, instructor annotations, and classroom-based architecture labs.
+
+\textbf{GPU and Accelerator Modeling:} Extend simulation to GPU pipelines, SIMD/vector execution, and tensor-core architectures.

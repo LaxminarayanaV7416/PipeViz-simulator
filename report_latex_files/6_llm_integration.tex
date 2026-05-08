@@ -1,0 +1,40 @@
+\section*{6. LLM Integration}
+
+% PipeViz includes a structured prompt template (\textit{prompt_template.md.j2}) that feeds the LLM:
+
+% \begin{enumerate}
+%     \item Source code  
+%     \item Generated assembly  
+%     \item Pipeline stages  
+%     \item Pipeline simulation table (with stalls)  
+% \end{enumerate}
+
+% The LLM is asked to:
+% \begin{enumerate}
+%     \item Identify inefficiencies in the pipeline output.
+%     \item Explain the hazards causing stalls.
+%     \item Suggest optimizations (e.g., loop unrolling, reordering, reducing dependencies).
+% \end{enumerate}
+
+% This creates a human-readable analysis layer on top of the simulator output.
+
+One of the central innovations of PipeViz is the integration of a large language model (LLM) as a pipeline-aware optimization assistant. Traditional optimization assistants typically operate only on source code and lack visibility into actual processor execution behavior. In contrast, PipeViz provides the LLM with detailed micro architectural context including generated AArch64 assembly, detected hazards, compiler optimization settings, and cycle-by-cycle pipeline traces. This enables the assistant to reason about performance bottlenecks using concrete execution evidence rather than generalized programming heuristics.
+
+The LLM integration transforms PipeViz from a passive visualization tool into an interactive architectural analysis environment. Users can query the assistant about specific stalls, dependencies, or execution inefficiencies and receive explanations grounded in the observed pipeline behavior. The assistant can also suggest optimizations such as loop unrolling, instruction reordering, register reuse reduction, and cache-aware restructuring, allowing users to iteratively refine their programs and immediately validate the impact through re-simulation.
+
+\subsection*{6.1 Prompt Design}
+The LLM receives a structured prompt rendered from a Jinja2 template that assembles four categories of context: (1) the model is assigned the role of a computer architecture expert and instructed not to infer values not present in the provided data; (2) the full source code of the simulated function is included alongside all relevant compilation and simulation parameters; (3) the ARM64 disassembly produced by the compilation step is provided in full, allowing the model to reason at the instruction level about register dependencies and memory access patterns; and (4) the cycle-by-cycle pipeline execution table is included with stall stages annotated.
+
+This structured context grounds the model's suggestions in the actual observed pipeline behavior rather than general heuristics, reducing the risk of generic or inapplicable recommendations.
+
+\subsection*{6.2 Interaction Model}
+The assistant supports a multi-turn conversation within a simulation session. Each query is associated with a persistent workflow identifier that links the question to the corresponding simulation context. Prior questions are accumulated and included in subsequent prompts, allowing the model to maintain coherence across follow-up queries without requiring the user to restate context. A prompt length limit of 75,000 tokens is enforced to prevent context window overflow for programs with large assembly outputs.
+
+\subsection*{6.3 Optimization Suggestions}
+
+The LLM is asked to perform three tasks given the simulation output:\\
+(1) Identify inefficiencies in the pipeline table, such as repeated stalls or high-latency instruction sequences. \\
+(2) Explain the root cause of detected hazards in terms of register dependencies or resource contention between specific instructions.\\
+(3) Propose concrete optimizations at the source code or assembly level, including techniques such as instruction reordering, loop unrolling, strength reduction, or reducing register dependencies to allow better pipeline utilization.
+
+The suggestions are returned as natural-language text and displayed in the chat panel. The user can then apply the changes, resubmit the code, and observe the impact on stall counts and hazard frequency in the updated simulation. This creates an iterative refinement loop: code $\to$ pipeline $\to$ LLM analysis $\to$ optimization $\to$ improved pipeline.
