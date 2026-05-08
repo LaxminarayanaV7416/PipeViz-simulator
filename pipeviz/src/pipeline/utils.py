@@ -23,21 +23,31 @@ def extract_function_assembly(asm_text: str, func_name: str) -> list[str]:
     Args:
         asm_text (str): The raw string content of the assembly file.
         func_name (str): The name of the function to extract (e.g., 'main', 'fibonacci').
-                         Matches substrings to handle C++ name mangling.
+                         Matches exact names and C++ mangled symbols (e.g., _Z...).
 
     Returns:
-        str: The extracted assembly block, or an empty string if not found.
+        list[str]: The extracted assembly block, or an empty list if not found.
     """
     lines = asm_text.splitlines()
     in_function = False
     captured_lines = []
 
-    # Regex to match function headers like: "0000000000400804 <_Z9fibonaccij>:"
-    # It ensures the line starts with hex digits, has a space, and a name in brackets.
     header_pattern = re.compile(r"^([0-9a-fA-F]+)\s+<([^>]+)>:")
-
-    # Regex to match the start of a new section like: "Disassembly of section .fini:"
     section_pattern = re.compile(r"^Disassembly of section")
+
+    def is_target_symbol(symbol_name: str) -> bool:
+        # Ignore PLT / GLIBC / dynamic symbols
+        if "@" in symbol_name:
+            return False
+        if symbol_name == func_name:
+            return True
+        if symbol_name == f"_{func_name}":
+            return True
+        if symbol_name.startswith(f"{func_name}."):
+            return True
+        if symbol_name.startswith("_Z") and func_name in symbol_name:
+            return True
+        return False
 
     for line in lines:
         header_match = header_pattern.match(line)
@@ -46,27 +56,19 @@ def extract_function_assembly(asm_text: str, func_name: str) -> list[str]:
             symbol_name = header_match.group(2)
 
             if in_function:
-                # We are already capturing, and we just hit the NEXT function header.
-                # This means our target function block has ended.
                 break
 
-            # Check if this header belongs to the function we are looking for.
-            # We use `in` to automatically handle C++ mangled names like `_Z9fibonaccij`.
-            if func_name in symbol_name:
+            if is_target_symbol(symbol_name):
                 in_function = True
                 captured_lines.append(line)
                 continue
 
         if in_function:
-            # Stop if we hit a brand new disassembly section
             if section_pattern.match(line):
                 break
-
-            # here replace the \t with the space to make it more readable
             line = line.replace("\t", "   ")
             captured_lines.append(line)
 
-    # Strip any trailing empty lines from the extracted block
     return captured_lines
 
 

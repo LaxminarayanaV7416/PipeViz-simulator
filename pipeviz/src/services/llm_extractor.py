@@ -27,8 +27,8 @@ else:
         base_url=f"http://{LITELLM_HOST}:4000/v1",
         api_key="my-master-key",
     )
-    # MODEL_NAME = "local-llama3.2"
-    MODEL_NAME = "local-llama3.2-8k"
+    MODEL_NAME = "local-llama3.2"
+    # MODEL_NAME = "local-llama3.2-8k"
 
 
 def check_prompt_length(prompt: str) -> bool:
