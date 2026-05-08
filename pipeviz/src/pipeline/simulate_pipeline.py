@@ -142,8 +142,11 @@ class PipelineSimulator:
                 ]
 
                 if stage in raw_prone:
+                    older_states_pre_wb = [
+                        s for s in older_states if s.stage < final_stage.value
+                    ]
                     producers = hazard_detector.detect_raw_hazards(
-                        current_inst, older_states
+                        current_inst, older_states_pre_wb
                     )
                     if producers:
                         for prev_inst in producers:
